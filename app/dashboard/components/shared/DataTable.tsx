@@ -23,6 +23,7 @@ interface DataTableProps {
   onDelete?: (row: any) => void;
   filterOptions?: { value: string; label: string }[];
   loading?: boolean;
+  onRowClick?: (row: any) => void;
 }
 
 const DataTable = ({
@@ -35,7 +36,8 @@ const DataTable = ({
   onView,
   onDelete,
   filterOptions,
-  loading = false
+  loading = false,
+  onRowClick
 }: DataTableProps) => {
   const { language, isRTL } = useDirection();
   const [searchTerm, setSearchTerm] = useState('');
@@ -163,7 +165,12 @@ const DataTable = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="hover:bg-stone-gray/5 transition-colors duration-200"
+                  className={`hover:bg-stone-gray/5 transition-colors duration-200 ${onRowClick ? 'cursor-pointer' : ''}`}
+                  onClick={onRowClick ? (e) => {
+                    // Prevent row click if an action button was clicked
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    onRowClick(row);
+                  } : undefined}
                 >
                   {columns.map((column) => (
                     <td key={column.key} className="px-6 py-4 whitespace-nowrap">

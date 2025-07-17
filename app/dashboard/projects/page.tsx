@@ -9,6 +9,7 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import { useRouter } from 'next/navigation';
 
 interface ProjectFeature {
   id: string;
@@ -25,6 +26,7 @@ interface ProjectService {
 
 export default function ProjectsPage() {
   const { language } = useDirection();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('list');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -760,6 +762,10 @@ export default function ProjectsPage() {
               onView={handleView}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onRowClick={(row) => {
+                // row.id is the project id
+                router.push(`/dashboard/projects/${row.id}`);
+              }}
             />
           )}
 
