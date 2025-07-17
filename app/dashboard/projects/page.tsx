@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useDirection } from '@/context/DirectionContext';
 import { useState, useRef } from 'react';
-import { Plus, Building2, MapPin, Calendar, Users, TrendingUp, Eye, Edit, Trash2, Filter, Search, Upload, X, Youtube, Drama as Panorama, Check, ArrowUp as Elevator, Car, Dumbbell, Waves, Church as Mosque, Home, Shield, Video, Wrench, Brush, Wind, Wifi, PlusCircle, Image, FileText, CreditCard, Settings } from 'lucide-react';
+import { Plus, Building2, MapPin, Calendar, Users, TrendingUp, Eye, Edit, Trash2, Filter, Search, Upload, X, Youtube, Drama as Panorama, Check, ArrowUp as Elevator, Car, Dumbbell, Waves, Church as Mosque, Home, Shield, Video, Wrench, Brush, Wind, Wifi, PlusCircle, Image, FileText, CreditCard, Settings, Clock } from 'lucide-react';
 import PageWrapper from '../components/PageWrapper';
 import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
@@ -41,6 +41,75 @@ export default function ProjectsPage() {
   const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const licenseFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Bulk Unit Creation System States
+  const [showBulkUnitModal, setShowBulkUnitModal] = useState(false);
+  const [showProjectSelectionModal, setShowProjectSelectionModal] = useState(false);
+  const [selectedProjectForBulk, setSelectedProjectForBulk] = useState<any>(null);
+  const [bulkProjects, setBulkProjects] = useState<any[]>([]);
+  const [bulkProjectError, setBulkProjectError] = useState('');
+  const [bulkUnitForm, setBulkUnitForm] = useState({
+    designName: '',
+    numberOfCopies: 1,
+    area: '',
+    rooms: '',
+    bathrooms: '',
+    startingPrice: '',
+    floorStart: 1,
+    floorEnd: 1,
+    orientation: 'north',
+    view: 'front',
+    description: '',
+    unitPrefix: 'A'
+  });
+  const [previewUnits, setPreviewUnits] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [showExcelUpload, setShowExcelUpload] = useState(false);
+  const [excelPreviewData, setExcelPreviewData] = useState<Array<{
+    project_name: string;
+    code: string;
+    designName: string;
+    area: number;
+    floor: number;
+    rooms: number;
+    bathrooms: number;
+    view: string;
+    orientation: string;
+    price: number;
+    status: string;
+    project_id?: number;
+  }>>([]);
+  const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+
+  // Smart Unit Entry Form States
+  const [projectFloors, setProjectFloors] = useState<any>([]);
+  const [availableTemplates, setAvailableTemplates] = useState<any>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState('');
+  
+  // Unit Configuration Form
+  const [unitConfig, setUnitConfig] = useState({
+    designName: '',
+    numberOfUnits: 1,
+    area: '',
+    rooms: '',
+    bathrooms: '',
+    startingPrice: '',
+    unitPrefix: 'A',
+    description: '',
+    direction: 'north',
+    view: 'city',
+    autoFillAll: false
+  });
+
+  // Floor Distribution
+  const floorDistribution = useRef<Record<number, number>>({});
+  const [generatedUnits, setGeneratedUnits] = useState<any[]>([]);
+  const [duplicateCodes, setDuplicateCodes] = useState<string[]>([]);
 
   // Mock data
   const projects = [
@@ -378,6 +447,144 @@ export default function ProjectsPage() {
     setServices(prev => prev.filter(service => service.id !== id));
   };
 
+  // Bulk Unit Creation Helper Functions
+  const generateUnitCode = (projectCode: string, prefix: string, index: number) => {
+    return `${projectCode}-${prefix}${index}`;
+  };
+
+  const generatePreviewUnits = () => {
+    const units = [];
+    const projectCode = selectedProject?.project_code || 'PRJ-001';
+    
+    for (let i = 1; i <= bulkUnitForm.numberOfCopies; i++) {
+      const floorNumber = Math.floor((i - 1) / Math.ceil(bulkUnitForm.numberOfCopies / (bulkUnitForm.floorEnd - bulkUnitForm.floorStart + 1))) + bulkUnitForm.floorStart;
+      
+      units.push({
+        id: `preview-${i}`,
+        code: generateUnitCode(projectCode, bulkUnitForm.unitPrefix, i),
+        designName: bulkUnitForm.designName,
+        area: parseFloat(bulkUnitForm.area) || 0,
+        floor: floorNumber,
+        rooms: parseInt(bulkUnitForm.rooms) || 0,
+        bathrooms: parseInt(bulkUnitForm.bathrooms) || 0,
+        price: parseFloat(bulkUnitForm.startingPrice) || 0,
+        orientation: bulkUnitForm.orientation,
+        view: bulkUnitForm.view,
+        status: 'available',
+        description: bulkUnitForm.description
+      });
+    }
+    
+    setPreviewUnits(units);
+    setShowPreview(true);
+  };
+
+  const saveTemplate = () => {
+    const template = {
+      id: Date.now().toString(),
+      name: bulkUnitForm.designName,
+      ...bulkUnitForm
+    };
+    setSavedTemplates(prev => [...prev, template]);
+    alert(language === 'ar' ? 'تم حفظ القالب بنجاح' : 'Template saved successfully');
+  };
+
+  const loadTemplate = (template: any) => {
+    setBulkUnitForm(template);
+    setSelectedTemplate(template);
+  };
+
+  const handleExcelUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+      const projectNameIdx = headers.indexOf('project_name');
+      if (projectNameIdx === -1) {
+        setBulkProjectError(language === 'ar' ? 'ملف Excel يجب أن يحتوي على عمود project_name' : 'Excel file must contain a project_name column');
+        setShowExcelUpload(true);
+        return;
+      }
+      const data = lines.slice(1).filter(line => line.trim()).map(line => {
+        const values = line.split(',');
+        return {
+          project_name: values[projectNameIdx]?.trim(),
+          code: values[0]?.trim(),
+          designName: values[1]?.trim(),
+          area: parseFloat(values[2]) || 0,
+          floor: parseInt(values[3]) || 0,
+          rooms: parseInt(values[4]) || 0,
+          bathrooms: parseInt(values[5]) || 0,
+          view: values[6]?.trim(),
+          orientation: values[7]?.trim(),
+          price: parseFloat(values[8]) || 0,
+          status: values[9]?.trim() || 'available',
+          project_id: undefined as number | undefined
+        };
+      });
+      // Validate project_name for all rows
+      const allProjects = [
+        { id: 1, name: language === 'ar' ? 'مجمع الأناقة السكني' : 'Elegance Residential Complex' },
+        { id: 2, name: language === 'ar' ? 'برج التجارة المركزي' : 'Central Trade Tower' },
+        { id: 3, name: language === 'ar' ? 'قرية الهدوء' : 'Tranquil Village' },
+      ];
+      for (const row of data) {
+        const match = allProjects.find(p => p.name === row.project_name);
+        if (!match) {
+          setBulkProjectError(language === 'ar' ? 'اسم المشروع غير معروف. يرجى التأكد من مطابقته تماماً للاسم في النظام.' : 'Project name not recognized. Please make sure it exactly matches the project name in the system.');
+          setShowExcelUpload(true);
+          return;
+        }
+        row.project_id = match.id;
+      }
+      setBulkProjectError('');
+      setExcelPreviewData(data);
+      setShowExcelUpload(true);
+    };
+    reader.readAsText(file);
+  };
+
+  const confirmBulkUnits = () => {
+    // Here you would typically save to backend
+    console.log('Saving bulk units:', previewUnits);
+    alert(language === 'ar' ? `تم إنشاء ${previewUnits.length} وحدة بنجاح` : `Successfully created ${previewUnits.length} units`);
+    setShowBulkUnitModal(false);
+    setShowPreview(false);
+    setPreviewUnits([]);
+    setBulkUnitForm({
+      designName: '',
+      numberOfCopies: 1,
+      area: '',
+      rooms: '',
+      bathrooms: '',
+      startingPrice: '',
+      floorStart: 1,
+      floorEnd: 1,
+      orientation: 'north',
+      view: 'front',
+      description: '',
+      unitPrefix: 'A'
+    });
+  };
+
+  const confirmExcelImport = () => {
+    // Here you would typically save to backend
+    console.log('Importing Excel units:', excelPreviewData);
+    alert(language === 'ar' ? `تم استيراد ${excelPreviewData.length} وحدة بنجاح` : `Successfully imported ${excelPreviewData.length} units`);
+    setShowExcelUpload(false);
+    setExcelPreviewData([]);
+    setExcelFile(null);
+  };
+
+  const removePreviewUnit = (id: string) => {
+    setPreviewUnits(prev => prev.filter(unit => unit.id !== id));
+  };
+
+  const removeExcelUnit = (index: number) => {
+    setExcelPreviewData(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleView = (project: any) => {
     setSelectedProject(project);
   };
@@ -408,6 +615,24 @@ export default function ProjectsPage() {
     if (confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا المشروع؟' : 'Are you sure you want to delete this project?')) {
       console.log('Delete project:', project);
     }
+  };
+
+  // Fetch projects for bulk modal
+  const fetchBulkProjects = async () => {
+    // Mock API call
+    setTimeout(() => {
+      setBulkProjects([
+        { id: 1, name: language === 'ar' ? 'مجمع الأناقة السكني' : 'Elegance Residential Complex' },
+        { id: 2, name: language === 'ar' ? 'برج التجارة المركزي' : 'Central Trade Tower' },
+        { id: 3, name: language === 'ar' ? 'قرية الهدوء' : 'Tranquil Village' },
+      ]);
+    }, 500);
+  };
+
+  // Add Bulk Units button handler
+  const handleAddBulkUnits = () => {
+    setShowProjectSelectionModal(true);
+    fetchBulkProjects();
   };
 
   return (
@@ -584,24 +809,117 @@ export default function ProjectsPage() {
 
           {activeTab === 'units' && (
             <div className="bg-obsidian/50 backdrop-blur-sm rounded-xl p-8 border border-desert-gold/20">
-              <h2 className="text-2xl font-bold text-elegant-white mb-6">
-                {language === 'ar' ? 'إدارة الوحدات' : 'Unit Management'}
-              </h2>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h2 className="text-2xl font-bold text-elegant-white">
+                  {language === 'ar' ? 'إدارة الوحدات' : 'Unit Management'}
+                </h2>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <motion.button
+                    onClick={handleAddBulkUnits}
+                    className="bg-desert-gold text-deep-black px-4 py-2 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'إضافة وحدات بشكل جماعي' : 'Add Bulk Units'}</span>
+                  </motion.button>
+                  
+                  <motion.button
+                    onClick={() => setShowExcelUpload(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'استيراد ملف Excel' : 'Upload Excel'}</span>
+                  </motion.button>
+                </div>
+              </div>
               
+              {/* Project Selection */}
+              <div className="mb-6">
+                <label className="block text-elegant-white font-medium mb-2">
+                  {language === 'ar' ? 'اختر المشروع:' : 'Select Project:'}
+                </label>
+                <select className="w-full md:w-64 bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                  <option value="" className="bg-obsidian">
+                    {language === 'ar' ? 'اختر مشروع لإدارة وحداته' : 'Select a project to manage its units'}
+                  </option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id} className="bg-obsidian">
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Units Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-stone-gray text-sm">{language === 'ar' ? 'إجمالي الوحدات' : 'Total Units'}</p>
+                      <p className="text-xl font-bold text-elegant-white">0</p>
+                    </div>
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <Building2 className="h-5 w-5 text-blue-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-stone-gray text-sm">{language === 'ar' ? 'متاح للبيع' : 'Available'}</p>
+                      <p className="text-xl font-bold text-green-400">0</p>
+                    </div>
+                    <div className="p-2 bg-green-500/20 rounded-lg">
+                      <Check className="h-5 w-5 text-green-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-stone-gray text-sm">{language === 'ar' ? 'محجوز' : 'Reserved'}</p>
+                      <p className="text-xl font-bold text-yellow-400">0</p>
+                    </div>
+                    <div className="p-2 bg-yellow-500/20 rounded-lg">
+                      <Clock className="h-5 w-5 text-yellow-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-stone-gray text-sm">{language === 'ar' ? 'مباع' : 'Sold'}</p>
+                      <p className="text-xl font-bold text-red-400">0</p>
+                    </div>
+                    <div className="p-2 bg-red-500/20 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-red-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Units Table Placeholder */}
               <div className="text-center py-12">
                 <Building2 className="h-16 w-16 text-desert-gold mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-elegant-white mb-2">
-                  {language === 'ar' ? 'إدارة الوحدات' : 'Unit Management'}
+                  {language === 'ar' ? 'لا توجد وحدات بعد' : 'No Units Yet'}
                 </h3>
                 <p className="text-stone-gray mb-6">
-                  {language === 'ar' ? 'إدارة تفصيلية لجميع الوحدات في المشاريع' : 'Detailed management of all units in projects'}
+                  {language === 'ar' ? 'ابدأ بإضافة وحدات للمشروع المحدد' : 'Start by adding units to the selected project'}
                 </p>
                 <motion.button
+                  onClick={() => setShowBulkUnitModal(true)}
                   className="bg-desert-gold text-deep-black px-6 py-3 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  {language === 'ar' ? 'إدارة الوحدات' : 'Manage Units'}
+                  {language === 'ar' ? 'إضافة وحدات' : 'Add Units'}
                 </motion.button>
               </div>
             </div>
@@ -627,66 +945,210 @@ export default function ProjectsPage() {
           }
           size="xl"
         >
-          <form className="space-y-6">
-            {/* Project Info Section */}
+          <form className="space-y-8">
+            {/* 🧱 Basic Info Section */}
             <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
               <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
                 <Building2 className="h-5 w-5 mr-2" />
-                {language === 'ar' ? 'معلومات المشروع' : 'Project Info'}
+                {language === 'ar' ? '🧱 المعلومات الأساسية' : '🧱 Basic Info'}
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label={language === 'ar' ? 'اسم المشروع' : 'Project Name'} required>
+                <FormField label={language === 'ar' ? 'اسم المشروع (بالعربية)' : 'Project Name (Arabic)'} required>
                   <input
                     type="text"
-                    defaultValue={selectedProject?.name || ''}
+                    name="project_name_ar"
+                    defaultValue={selectedProject?.name_ar || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={language === 'ar' ? 'أدخل اسم المشروع' : 'Enter project name'}
+                    placeholder={language === 'ar' ? 'اسم المشروع (بالعربية)' : 'Project Name (Arabic)'}
                   />
                 </FormField>
 
-                <FormField label={language === 'ar' ? 'الموقع' : 'Location'} required>
+                <FormField label={language === 'ar' ? 'اسم المشروع (بالإنجليزية)' : 'Project Name (English)'} required>
                   <input
                     type="text"
-                    defaultValue={selectedProject?.location || ''}
+                    name="project_name_en"
+                    defaultValue={selectedProject?.name_en || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={language === 'ar' ? 'أدخل موقع المشروع' : 'Enter project location'}
+                    placeholder={language === 'ar' ? 'Project Name (English)' : 'Project Name (English)'}
                   />
                 </FormField>
 
-                <FormField label={language === 'ar' ? 'نوع المشروع' : 'Project Type'} required>
+                <FormField label={language === 'ar' ? 'رمز المشروع' : 'Project Code'}>
+                  <input
+                    type="text"
+                    name="project_code"
+                    defaultValue={selectedProject?.project_code || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'رمز المشروع (مثل PRJ-001)' : 'Project Code (e.g., PRJ-001)'}
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'المدينة' : 'City'} required>
                   <select
-                    defaultValue={selectedProject?.type || 'residential'}
+                    name="city"
+                    defaultValue={selectedProject?.city || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
                   >
-                    <option value="residential" className="bg-obsidian">
-                      {language === 'ar' ? 'سكني' : 'Residential'}
+                    <option value="" className="bg-obsidian">
+                      {language === 'ar' ? 'اختر المدينة' : 'Select City'}
                     </option>
-                    <option value="commercial" className="bg-obsidian">
-                      {language === 'ar' ? 'تجاري' : 'Commercial'}
+                    <option value="riyadh" className="bg-obsidian">
+                      {language === 'ar' ? 'الرياض' : 'Riyadh'}
                     </option>
-                    <option value="mixed" className="bg-obsidian">
-                      {language === 'ar' ? 'مختلط' : 'Mixed Use'}
+                    <option value="jeddah" className="bg-obsidian">
+                      {language === 'ar' ? 'جدة' : 'Jeddah'}
+                    </option>
+                    <option value="dammam" className="bg-obsidian">
+                      {language === 'ar' ? 'الدمام' : 'Dammam'}
+                    </option>
+                    <option value="makkah" className="bg-obsidian">
+                      {language === 'ar' ? 'مكة المكرمة' : 'Makkah'}
+                    </option>
+                    <option value="medina" className="bg-obsidian">
+                      {language === 'ar' ? 'المدينة المنورة' : 'Medina'}
                     </option>
                   </select>
                 </FormField>
 
-                <FormField label={language === 'ar' ? 'إجمالي الوحدات' : 'Total Units'} required>
+                <FormField label={language === 'ar' ? 'المنطقة / الحي' : 'District'} required>
                   <input
-                    type="number"
-                    defaultValue={selectedProject?.totalUnits || ''}
+                    type="text"
+                    name="district"
+                    defaultValue={selectedProject?.district || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder="0"
+                    placeholder={language === 'ar' ? 'المنطقة / الحي' : 'District / Neighborhood'}
                   />
                 </FormField>
 
-                <FormField label={language === 'ar' ? 'مدير المشروع' : 'Project Manager'} required>
+                <FormField label={language === 'ar' ? 'العنوان الكامل' : 'Full Address'} className="md:col-span-2">
+                  <input
+                    type="text"
+                    name="address"
+                    defaultValue={selectedProject?.address || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'العنوان الكامل للموقع' : 'Complete address of the location'}
+                  />
+                </FormField>
+              </div>
+            </div>
+
+            {/* 📎 Ownership & Document Details Section */}
+            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
+              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                {language === 'ar' ? '📎 الملكية وتفاصيل الوثائق' : '📎 Ownership & Document Details'}
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField label={language === 'ar' ? 'رقم المخطط' : 'Plan Number'}>
+                  <input
+                    type="text"
+                    name="plan_number"
+                    defaultValue={selectedProject?.plan_number || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'رقم المخطط' : 'Plan Number'}
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'رقم القطعة' : 'Piece Number'}>
+                  <input
+                    type="text"
+                    name="piece_number"
+                    defaultValue={selectedProject?.piece_number || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'رقم القطعة' : 'Piece Number'}
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'رقم الصك' : 'Deed Number'}>
+                  <input
+                    type="text"
+                    name="deed_number"
+                    defaultValue={selectedProject?.deed_number || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'رقم الصك' : 'Deed Number'}
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'مكان الإصدار' : 'Issuing Place'}>
+                  <input
+                    type="text"
+                    name="issuing_place"
+                    defaultValue={selectedProject?.issuing_place || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'مكان الإصدار' : 'Issuing Place'}
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'تاريخ الإصدار' : 'Issuing Date'}>
+                  <input
+                    type="date"
+                    name="issuing_date"
+                    defaultValue={selectedProject?.issuing_date || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'الجهة' : 'Organization'}>
+                  <input
+                    type="text"
+                    name="organization"
+                    defaultValue={selectedProject?.organization || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'الجهة' : 'Organization'}
+                  />
+                </FormField>
+              </div>
+            </div>
+
+            {/* 🧩 Additional Info Section */}
+            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
+              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                {language === 'ar' ? '🧩 معلومات إضافية' : '🧩 Additional Info'}
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField label={language === 'ar' ? 'شركة الإنشاء' : 'Contractor Company'}>
+                  <input
+                    type="text"
+                    name="contractor_company"
+                    defaultValue={selectedProject?.contractor_company || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'اسم شركة الإنشاء (اختياري)' : 'Contractor Company Name (Optional)'}
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'حالة المشروع' : 'Project Status'} required>
                   <select
-                    defaultValue=""
+                    name="project_status"
+                    defaultValue={selectedProject?.status || 'ready'}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                  >
+                    <option value="ready" className="bg-obsidian">
+                      {language === 'ar' ? 'جاهز للبيع ✅' : 'Ready for Sale ✅'}
+                    </option>
+                    <option value="sold" className="bg-obsidian">
+                      {language === 'ar' ? 'تم البيع بالكامل 🏁' : 'Fully Sold 🏁'}
+                    </option>
+                    <option value="under-construction" className="bg-obsidian">
+                      {language === 'ar' ? 'قيد الإنشاء 🔨' : 'Under Construction 🔨'}
+                    </option>
+                    <option value="on-hold" className="bg-obsidian">
+                      {language === 'ar' ? 'متوقف ⏸️' : 'On Hold ⏸️'}
+                    </option>
+                  </select>
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'مندوب المشروع' : 'Sales Representative'} required>
+                  <select
+                    name="sales_rep"
+                    defaultValue={selectedProject?.sales_rep || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
                   >
                     <option value="" className="bg-obsidian">
-                      {language === 'ar' ? 'اختر مدير المشروع' : 'Select Project Manager'}
+                      {language === 'ar' ? 'اختر مندوب المشروع' : 'Select Sales Representative'}
                     </option>
                     <option value="ahmed" className="bg-obsidian">
                       {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
@@ -702,252 +1164,34 @@ export default function ProjectsPage() {
 
                 <FormField label={language === 'ar' ? 'وصف المشروع' : 'Project Description'} className="md:col-span-2">
                   <textarea
+                    name="project_description"
                     rows={4}
                     defaultValue={selectedProject?.description || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
-                    placeholder={language === 'ar' ? 'أدخل وصف المشروع...' : 'Enter project description...'}
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            {/* Legal & Status Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
-                {language === 'ar' ? 'الوضع القانوني والحالة' : 'Legal & Status'}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label={language === 'ar' ? 'حالة المشروع' : 'Project Status'} required>
-                  <select
-                    defaultValue={selectedProject?.status || 'on-map'}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="on-map" className="bg-obsidian">
-                      {language === 'ar' ? 'على الخريطة' : 'On Map'}
-                    </option>
-                    <option value="under-construction" className="bg-obsidian">
-                      {language === 'ar' ? 'قيد الإنشاء' : 'Under Construction'}
-                    </option>
-                    <option value="ready" className="bg-obsidian">
-                      {language === 'ar' ? 'مكتمل' : 'Ready for Delivery'}
-                    </option>
-                    <option value="on-hold" className="bg-obsidian">
-                      {language === 'ar' ? 'متوقف' : 'On Hold'}
-                    </option>
-                  </select>
-                </FormField>
-
-                <FormField label={language === 'ar' ? 'تاريخ التسليم المتوقع' : 'Estimated Delivery Date'} required>
-                  <input
-                    type="date"
-                    defaultValue={selectedProject?.deliveryDate || ''}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'وصف موجز للمشروع' : 'Brief project description'}
                   />
                 </FormField>
 
-                <FormField label={language === 'ar' ? 'رقم ترخيص المشروع' : 'Project License Number'}>
-                  <input
-                    type="text"
-                    defaultValue={selectedProject?.licenseNumber || ''}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={language === 'ar' ? 'أدخل رقم الترخيص' : 'Enter license number'}
-                  />
-                </FormField>
-
-                <FormField label={language === 'ar' ? 'ملف الترخيص (PDF)' : 'License File (PDF)'}>
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        ref={licenseFileInputRef}
-                        onChange={(e) => handleLicenseFile(e.target.files)}
-                        className="hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => licenseFileInputRef.current?.click()}
-                        className="bg-stone-gray/20 text-elegant-white px-4 py-2 rounded-lg font-medium hover:bg-stone-gray/30 transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>{language === 'ar' ? 'تحميل ملف' : 'Upload File'}</span>
-                      </button>
-                    </div>
-                    
-                    {projectLicense && (
-                      <div className="flex items-center justify-between bg-stone-gray/10 rounded-lg p-2">
-                        <span className="text-elegant-white truncate">{projectLicense.name}</span>
-                        <button
-                          type="button"
-                          onClick={removeLicense}
-                          className="text-stone-gray hover:text-red-400 transition-colors duration-200"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-                    
-                    {!projectLicense && (
-                      <p className="text-yellow-400 text-sm">
-                        {language === 'ar' ? 'يُنصح بتحميل ملف الترخيص' : 'License file upload is recommended'}
-                      </p>
-                    )}
-                  </div>
-                </FormField>
-
-                <FormField label={language === 'ar' ? 'تاريخ البداية' : 'Start Date'} required>
-                  <input
-                    type="date"
-                    defaultValue={selectedProject?.startDate || ''}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            {/* Construction Details Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <Building2 className="h-5 w-5 mr-2" />
-                {language === 'ar' ? 'تفاصيل البناء' : 'Construction Details'}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label={language === 'ar' ? 'مستوى التشطيب' : 'Finishing Level'} required>
-                  <select
-                    defaultValue={selectedProject?.finishingLevel || 'regular'}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="no-finishing" className="bg-obsidian">
-                      {language === 'ar' ? 'بدون تشطيب' : 'No Finishing'}
-                    </option>
-                    <option value="half-finishing" className="bg-obsidian">
-                      {language === 'ar' ? 'نصف تشطيب' : 'Half Finishing'}
-                    </option>
-                    <option value="regular" className="bg-obsidian">
-                      {language === 'ar' ? 'عادي' : 'Regular'}
-                    </option>
-                    <option value="luxury" className="bg-obsidian">
-                      {language === 'ar' ? 'فاخر' : 'Luxury'}
-                    </option>
-                    <option value="super-lux" className="bg-obsidian">
-                      {language === 'ar' ? 'سوبر لوكس' : 'Super Lux'}
-                    </option>
-                  </select>
-                </FormField>
-
-                <FormField label={language === 'ar' ? 'الضمانات المقدمة' : 'Warranties Provided'}>
+                <FormField label={language === 'ar' ? 'ملاحظات داخلية' : 'Internal Notes'} className="md:col-span-2">
                   <textarea
+                    name="internal_notes"
                     rows={3}
-                    defaultValue={selectedProject?.warranties || ''}
+                    defaultValue={selectedProject?.internal_notes || ''}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
-                    placeholder={language === 'ar' ? 'أدخل الضمانات المقدمة (كل ضمان في سطر)' : 'Enter warranties (one per line)'}
+                    placeholder={language === 'ar' ? 'ملاحظات داخلية (للإدارة)' : 'Internal notes (for management)'}
                   />
-                  <p className="text-stone-gray text-xs mt-1">
-                    {language === 'ar' ? 'مثال: ضمان 10 سنوات على النظام الكهربائي' : 'Example: 10-Year Warranty on Electrical System'}
-                  </p>
                 </FormField>
               </div>
             </div>
 
-            {/* Payment & Ownership Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <CreditCard className="h-5 w-5 mr-2" />
-                {language === 'ar' ? 'الدفع والملكية' : 'Payment & Ownership'}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label={language === 'ar' ? 'خطة الدفع' : 'Payment Plan'} required>
-                  <div className="space-y-3">
-                    <label className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <input
-                        type="radio"
-                        name="paymentPlan"
-                        value="one-time"
-                        checked={selectedPaymentPlan === 'one-time'}
-                        onChange={() => handlePaymentPlanChange('one-time')}
-                        className="text-desert-gold focus:ring-desert-gold"
-                      />
-                      <span className="text-elegant-white">
-                        {language === 'ar' ? 'دفعة واحدة' : 'One-time Payment'}
-                      </span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <input
-                        type="radio"
-                        name="paymentPlan"
-                        value="installments"
-                        checked={selectedPaymentPlan === 'installments'}
-                        onChange={() => handlePaymentPlanChange('installments')}
-                        className="text-desert-gold focus:ring-desert-gold"
-                      />
-                      <span className="text-elegant-white">
-                        {language === 'ar' ? 'أقساط مع دفعة مقدمة' : 'Installments with Down Payment'}
-                      </span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <input
-                        type="radio"
-                        name="paymentPlan"
-                        value="bank-financing"
-                        checked={selectedPaymentPlan === 'bank-financing'}
-                        onChange={() => handlePaymentPlanChange('bank-financing')}
-                        className="text-desert-gold focus:ring-desert-gold"
-                      />
-                      <span className="text-elegant-white">
-                        {language === 'ar' ? 'تمويل بنكي' : 'Bank Financing'}
-                      </span>
-                    </label>
-                  </div>
-                </FormField>
-
-                {selectedPaymentPlan === 'bank-financing' && (
-                  <FormField label={language === 'ar' ? 'اسم البنك/البنوك' : 'Bank Name(s)'}>
-                    <input
-                      type="text"
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                      placeholder={language === 'ar' ? 'أدخل أسماء البنوك المعتمدة' : 'Enter approved bank names'}
-                    />
-                  </FormField>
-                )}
-
-                <FormField label={language === 'ar' ? 'نوع الملكية' : 'Ownership Type'} required>
-                  <select
-                    defaultValue={selectedProject?.ownershipType || 'freehold'}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="freehold" className="bg-obsidian">
-                      {language === 'ar' ? 'تملك حر' : 'Freehold'}
-                    </option>
-                    <option value="rent-to-own" className="bg-obsidian">
-                      {language === 'ar' ? 'إيجار منتهي بالتمليك' : 'Rent-to-Own'}
-                    </option>
-                    <option value="long-term-lease" className="bg-obsidian">
-                      {language === 'ar' ? 'إيجار طويل الأمد' : 'Long-Term Lease'}
-                    </option>
-                    <option value="waqf" className="bg-obsidian">
-                      {language === 'ar' ? 'وقف' : 'Endowment (Waqf)'}
-                    </option>
-                  </select>
-                </FormField>
-              </div>
-            </div>
-
-            {/* Attachments & Media Section */}
+            {/* 📷 Media Upload Section */}
             <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
               <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
                 <Image className="h-5 w-5 mr-2" />
-                {language === 'ar' ? 'المرفقات والوسائط' : 'Attachments & Media'}
+                {language === 'ar' ? '📷 رفع الوسائط' : '📷 Media Upload'}
               </h3>
               
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField label={language === 'ar' ? 'صور المشروع' : 'Project Images'}>
                   <div
                     className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
@@ -966,6 +1210,7 @@ export default function ProjectsPage() {
                     </p>
                     <input
                       type="file"
+                      name="project_images"
                       accept="image/*"
                       multiple
                       ref={fileInputRef}
@@ -1003,223 +1248,97 @@ export default function ProjectsPage() {
                   )}
                 </FormField>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField label={language === 'ar' ? 'رابط فيديو يوتيوب' : 'YouTube Video Link'}>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <Youtube className="h-5 w-5 text-stone-gray" />
-                      </div>
+                <div className="space-y-6">
+                  <FormField label={language === 'ar' ? 'صورة المخطط' : 'Plan Image'}>
+                    <div className="border-2 border-dashed border-desert-gold/30 rounded-lg p-4 text-center hover:border-desert-gold/50 transition-colors duration-300">
                       <input
-                        type="url"
-                        defaultValue={selectedProject?.youtubeLink || ''}
-                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg pr-10 px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                        placeholder="https://www.youtube.com/watch?v=..."
+                        type="file"
+                        name="plan_image"
+                        accept="image/*"
+                        className="hidden"
+                        id="plan-image"
                       />
+                      <label htmlFor="plan-image" className="cursor-pointer">
+                        <Upload className="h-6 w-6 text-desert-gold mx-auto mb-2" />
+                        <p className="text-stone-gray text-sm">
+                          {language === 'ar' ? 'رفع صورة المخطط' : 'Upload Plan Image'}
+                        </p>
+                      </label>
                     </div>
                   </FormField>
 
-                  <FormField label={language === 'ar' ? 'رابط جولة 360 درجة' : '360° Tour Link'}>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <Panorama className="h-5 w-5 text-stone-gray" />
-                      </div>
+                  <FormField label={language === 'ar' ? 'شعار المشروع' : 'Project Logo'}>
+                    <div className="border-2 border-dashed border-desert-gold/30 rounded-lg p-4 text-center hover:border-desert-gold/50 transition-colors duration-300">
                       <input
-                        type="url"
-                        defaultValue={selectedProject?.tourLink || ''}
-                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg pr-10 px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                        placeholder="https://..."
+                        type="file"
+                        name="logo_image"
+                        accept="image/*"
+                        className="hidden"
+                        id="logo-image"
                       />
+                      <label htmlFor="logo-image" className="cursor-pointer">
+                        <Upload className="h-6 w-6 text-desert-gold mx-auto mb-2" />
+                        <p className="text-stone-gray text-sm">
+                          {language === 'ar' ? 'رفع شعار المشروع' : 'Upload Project Logo'}
+                        </p>
+                      </label>
                     </div>
                   </FormField>
                 </div>
               </div>
             </div>
 
-            {/* Services & Features Section */}
+            {/* 📊 Project Metrics Section */}
             <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
               <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                {language === 'ar' ? 'الخدمات والمميزات' : 'Services & Features'}
+                <TrendingUp className="h-5 w-5 mr-2" />
+                {language === 'ar' ? '📊 مقاييس المشروع' : '📊 Project Metrics'}
               </h3>
               
-              <div className="space-y-6">
-                {/* Project Features */}
-                <FormField label={language === 'ar' ? 'مميزات المشروع' : 'Project Features'}>
-                  <div className="space-y-4">
-                    <div className="flex">
-                      <input
-                        type="text"
-                        value={newFeature}
-                        onChange={(e) => setNewFeature(e.target.value)}
-                        className="flex-1 bg-stone-gray/10 border border-desert-gold/20 rounded-r-none rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                        placeholder={language === 'ar' ? 'أضف ميزة جديدة...' : 'Add new feature...'}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddFeature())}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddFeature}
-                        className="bg-desert-gold text-deep-black px-4 py-3 rounded-l-none rounded-lg font-medium hover:bg-warm-sand transition-all duration-300"
-                      >
-                        {language === 'ar' ? 'إضافة' : 'Add'}
-                      </button>
-                    </div>
-                    
-                    {features.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {features.map((feature) => (
-                          <div 
-                            key={feature.id}
-                            className="bg-stone-gray/10 border border-desert-gold/30 rounded-full px-3 py-1 flex items-center space-x-2 rtl:space-x-reverse"
-                          >
-                            <Check className="h-4 w-4 text-desert-gold" />
-                            <span className="text-elegant-white text-sm">{feature.text}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeFeature(feature.id)}
-                              className="text-stone-gray hover:text-red-400 transition-colors duration-200"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-stone-gray text-sm italic">
-                        {language === 'ar' ? 'لا توجد ميزات مضافة بعد' : 'No features added yet'}
-                      </p>
-                    )}
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField label={language === 'ar' ? 'عدد المباني' : 'Building Count'}>
+                  <input
+                    type="number"
+                    name="building_count"
+                    defaultValue={selectedProject?.building_count || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'عدد المباني' : 'Number of Buildings'}
+                    min="0"
+                  />
                 </FormField>
 
-                {/* Project Services */}
-                <div>
-                  <h4 className="text-lg font-bold text-elegant-white mb-4">
-                    {language === 'ar' ? 'خدمات المشروع' : 'Project Services'}
-                  </h4>
-                  
-                  <div className="relative mb-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowServicesDropdown(!showServicesDropdown)}
-                      className="bg-desert-gold text-deep-black px-4 py-2 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>{language === 'ar' ? 'إضافة خدمة' : 'Add Service'}</span>
-                    </button>
-                    
-                    {showServicesDropdown && (
-                      <div className="absolute z-10 mt-2 w-64 bg-obsidian border border-desert-gold/20 rounded-lg shadow-xl">
-                        <div className="p-2">
-                          <input
-                            type="text"
-                            placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
-                            className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-3 py-2 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 mb-2"
-                          />
-                          
-                          <div className="max-h-60 overflow-y-auto">
-                            {availableServices
-                              .filter(service => !services.some(s => s.id === service.id))
-                              .map(service => (
-                                <button
-                                  key={service.id}
-                                  type="button"
-                                  onClick={() => addService(service)}
-                                  className="w-full text-left flex items-center space-x-2 rtl:space-x-reverse px-3 py-2 hover:bg-stone-gray/10 rounded-lg transition-colors duration-200"
-                                >
-                                  <service.icon className="h-5 w-5 text-desert-gold" />
-                                  <span className="text-elegant-white">{service.name}</span>
-                                </button>
-                              ))}
-                            
-                            {!showCustomServiceInput && (
-                              <button
-                                type="button"
-                                onClick={() => setShowCustomServiceInput(true)}
-                                className="w-full text-left flex items-center space-x-2 rtl:space-x-reverse px-3 py-2 hover:bg-stone-gray/10 rounded-lg transition-colors duration-200 text-desert-gold"
-                              >
-                                <PlusCircle className="h-5 w-5" />
-                                <span>{language === 'ar' ? 'إضافة خدمة مخصصة' : 'Add Custom Service'}</span>
-                              </button>
-                            )}
-                          </div>
-                          
-                          {showCustomServiceInput && (
-                            <div className="mt-2 p-2 border-t border-desert-gold/20">
-                              <input
-                                type="text"
-                                value={customServiceName}
-                                onChange={(e) => setCustomServiceName(e.target.value)}
-                                placeholder={language === 'ar' ? 'اسم الخدمة المخصصة' : 'Custom service name'}
-                                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-3 py-2 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 mb-2"
-                              />
-                              <div className="flex space-x-2 rtl:space-x-reverse">
-                                <button
-                                  type="button"
-                                  onClick={addCustomService}
-                                  disabled={!customServiceName.trim()}
-                                  className="bg-desert-gold text-deep-black px-3 py-1 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                >
-                                  {language === 'ar' ? 'إضافة' : 'Add'}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setShowCustomServiceInput(false);
-                                    setCustomServiceName('');
-                                  }}
-                                  className="bg-stone-gray/20 text-stone-gray px-3 py-1 rounded-lg font-medium hover:bg-stone-gray/30 transition-all duration-300 text-sm"
-                                >
-                                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {services.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {services.map((service) => (
-                        <div
-                          key={service.id}
-                          className="bg-stone-gray/10 border border-desert-gold/20 rounded-lg p-3 flex items-center justify-between"
-                        >
-                          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                            <div className="w-8 h-8 bg-desert-gold/20 rounded-full flex items-center justify-center">
-                              <service.icon className="h-4 w-4 text-desert-gold" />
-                            </div>
-                            <span className="text-elegant-white">{service.name}</span>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                            {service.id === 'elevators' && (
-                              <input
-                                type="number"
-                                value={service.quantity || 1}
-                                onChange={(e) => updateServiceQuantity(service.id, parseInt(e.target.value) || 1)}
-                                min="1"
-                                className="w-12 bg-stone-gray/20 border border-desert-gold/20 rounded-lg px-2 py-1 text-elegant-white text-center"
-                              />
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeService(service.id)}
-                              className="text-stone-gray hover:text-red-400 transition-colors duration-200"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-stone-gray text-sm italic">
-                      {language === 'ar' ? 'لا توجد خدمات مضافة بعد' : 'No services added yet'}
-                    </p>
-                  )}
-                </div>
+                <FormField label={language === 'ar' ? 'عدد الأدوار لكل مبنى' : 'Floors Per Building'}>
+                  <input
+                    type="number"
+                    name="floors_per_building"
+                    defaultValue={selectedProject?.floors_per_building || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'عدد الأدوار لكل مبنى' : 'Number of Floors per Building'}
+                    min="0"
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'أقل سعر' : 'Minimum Unit Price'}>
+                  <input
+                    type="number"
+                    name="min_unit_price"
+                    defaultValue={selectedProject?.min_unit_price || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'أقل سعر' : 'Minimum Price'}
+                    min="0"
+                  />
+                </FormField>
+
+                <FormField label={language === 'ar' ? 'سعر البيع' : 'Average Unit Price'}>
+                  <input
+                    type="number"
+                    name="avg_unit_price"
+                    defaultValue={selectedProject?.avg_unit_price || ''}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder={language === 'ar' ? 'سعر البيع' : 'Average Price'}
+                    min="0"
+                  />
+                </FormField>
               </div>
             </div>
 
@@ -1242,13 +1361,777 @@ export default function ProjectsPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {selectedProject ? 
-                  (language === 'ar' ? 'تحديث' : 'Update') : 
-                  (language === 'ar' ? 'إنشاء المشروع' : 'Create Project')
-                }
+                {language === 'ar' ? 'حفظ' : 'Save'}
               </motion.button>
             </div>
           </form>
+        </Modal>
+
+        {/* Bulk Unit Creation Modal */}
+        <Modal
+          isOpen={showBulkUnitModal}
+          onClose={() => {
+            setShowBulkUnitModal(false);
+            setShowPreview(false);
+            setPreviewUnits([]);
+            setBulkUnitForm({
+              designName: '',
+              numberOfCopies: 1,
+              area: '',
+              rooms: '',
+              bathrooms: '',
+              startingPrice: '',
+              floorStart: 1,
+              floorEnd: 1,
+              orientation: 'north',
+              view: 'front',
+              description: '',
+              unitPrefix: 'A'
+            });
+          }}
+          title={language === 'ar' ? 'نظام الإدخال الذكي للوحدات' : 'Bulk Unit Creation System'}
+          size="xl"
+        >
+          {!showPreview ? (
+            <div className="space-y-8">
+              {/* Template Selection */}
+              {savedTemplates.length > 0 && (
+                <div className="bg-obsidian/70 rounded-xl p-6 border border-desert-gold/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-bold text-desert-gold flex items-center">
+                      <FileText className="h-5 w-5 mr-2" />
+                      {language === 'ar' ? 'القوالب المحفوظة' : 'Saved Templates'}
+                    </h4>
+                    <span className="text-stone-gray text-sm">
+                      {language === 'ar' ? `${savedTemplates.length} قالب` : `${savedTemplates.length} templates`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {savedTemplates.map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => loadTemplate(template)}
+                        className={`p-4 rounded-xl border transition-all duration-300 t-left hover:scale-105 ${
+                          selectedTemplate?.id === template.id
+                            ? 'border-desert-gold bg-desert-gold/10 shadow-lg'
+                            : 'border-desert-gold/20 over:border-desert-gold/40 bg-stone-gray/5'
+                        }`}
+                      >
+                        <div className="font-semibold text-elegant-white mb-1">{template.name}</div>
+                        <div className="text-sm text-stone-gray space-y-1">
+                          <div>{language === 'ar' ? `${template.numberOfCopies} وحدة` : `${template.numberOfCopies} units`}</div>
+                          <div>{template.area} m² • {template.rooms}/{template.bathrooms}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bulk Unit Form */}
+              <div className="bg-obsidian/70 rounded-xl p-8 border border-desert-gold/20">
+                <div className="flex items-center mb-6">
+                  <div className="p-3 bg-desert-gold/20 rounded-lg mr-4">
+                    <Building2 className="h-6 w-6 text-desert-gold" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-desert-gold">
+                      {language === 'ar' ? 'تفاصيل الوحدة' : 'Unit Details'}
+                    </h4>
+                    <p className="text-stone-gray text-sm">
+                      {language === 'ar' ? 'أدخل تفاصيل الوحدة التي تريد إنشاء نسخ منها : Enter details of the unit you want to create copies of' : 'Enter details of the unit you want to create copies of'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Basic Information */}
+                  <div className="space-y-6">
+                    <h5 className="text-lg font-semibold text-elegant-white border-b border-desert-gold/20 pb-2">
+                      {language === 'ar' ? 'المعلومات الأساسية' : 'Basic Information'}
+                    </h5>
+                    
+                    <FormField label={language === 'ar' ? 'اسم التصميم' : 'Design Name'} required>
+                      <input
+                        type="text"
+                        value={bulkUnitForm.designName}
+                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, designName: e.target.value }))}
+                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                        placeholder={language === 'ar' ? 'مثال: شقة 5 غرف نوم' : 'e.g., 5 Bedroom Apartment'}
+                      />
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'عدد النسخ' : 'Number of Copies'} required>
+                      <input
+                        type="number"
+                        value={bulkUnitForm.numberOfCopies}
+                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, numberOfCopies: parseInt(e.target.value) || 1 }))}
+                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                        placeholder="40"
+                        min="1"
+                      />
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'المساحة (م²)' : 'Area (m²)'} required>
+                      <input
+                        type="number"
+                        value={bulkUnitForm.area}
+                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, area: e.target.value }))}
+                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                        placeholder="180"
+                        min="0"
+                      />
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'الغرف / الحمامات' : 'Rooms / Bathrooms'}>
+                      <div className="flex space-x-3 rtl:space-x-reverse">
+                        <div className="flex-1">
+                          <label className="block text-stone-gray text-sm mb-2">
+                            {language === 'ar' ? 'الغرف' : 'Rooms'}
+                          </label>
+                          <input
+                            type="number"
+                            value={bulkUnitForm.rooms}
+                            onChange={(e) => setBulkUnitForm(prev => ({ ...prev, rooms: e.target.value }))}
+                            className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                            placeholder="5"
+                            min="0"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-stone-gray text-sm mb-2">
+                            {language === 'ar' ? 'الحمامات' : 'Bathrooms'}
+                          </label>
+                          <input
+                            type="number"
+                            value={bulkUnitForm.bathrooms}
+                            onChange={(e) => setBulkUnitForm(prev => ({ ...prev, bathrooms: e.target.value }))}
+                            className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                            placeholder="4"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    </FormField>
+                  </div>
+
+                  {/* Advanced Settings */}
+                  <div className="space-y-6">
+                    <h5 className="text-lg font-semibold text-elegant-white border-b border-desert-gold/20 pb-2">
+                      {language === 'ar' ? 'الإعدادات المتقدمة' : 'Advanced Settings'}
+                    </h5>
+                    
+                    <FormField label={language === 'ar' ? 'السعر الابتدائي' : 'Starting Price'}>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={bulkUnitForm.startingPrice}
+                          onChange={(e) => setBulkUnitForm(prev => ({ ...prev, startingPrice: e.target.value }))}
+                          className="w-full bg-stone-gray/10 border border-desert-gold/20 ounded-lg pl-12r-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                          placeholder="500000"
+                          min="0"
+                        />
+                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-stone-gray">
+                          {language === 'ar' ? 'ر.س' : 'SAR'}
+                        </span>
+                      </div>
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'توزيع الأدوار' : 'Floor Distribution'}>
+                      <div className="space-y-3">
+                        <div className="flex space-x-3 rtl:space-x-reverse">
+                          <div className="flex-1">
+                            <label className="block text-stone-gray text-sm mb-2">
+                              {language === 'ar' ? 'من دور' : 'From Floor'}
+                            </label>
+                            <input
+                              type="number"
+                              value={bulkUnitForm.floorStart}
+                              onChange={(e) => setBulkUnitForm(prev => ({ ...prev, floorStart: parseInt(e.target.value) || 1 }))}
+                              className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                              placeholder="1"
+                              min="1"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-stone-gray text-sm mb-2">
+                              {language === 'ar' ? 'إلى دور' : 'To Floor'}
+                            </label>
+                            <input
+                              type="number"
+                              value={bulkUnitForm.floorEnd}
+                              onChange={(e) => setBulkUnitForm(prev => ({ ...prev, floorEnd: parseInt(e.target.value) || 1 }))}
+                              className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                              placeholder="5"
+                              min="1"
+                            />
+                          </div>
+                        </div>
+                        <div className="text-xs text-stone-gray bg-stone-gray/10 rounded-lg p-2">
+                          {language === 'ar' ? 'سيتم توزيع الوحدات تلقائياً على الأدوار المحددة : l be automatically distributed across the specified floors' : 'Units will be automatically distributed across the specified floors'}
+                        </div>
+                      </div>
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'الاتجاه' : 'Orientation'}>
+                      <select
+                        value={bulkUnitForm.orientation}
+                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, orientation: e.target.value }))}
+                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                      >
+                        <option value="north" className="bg-obsidian">{language === 'ar' ? 'شمال' : 'North'}</option>
+                        <option value="south" className="bg-obsidian">{language === 'ar' ? 'جنوب' : 'South'}</option>
+                        <option value="east" className="bg-obsidian">{language === 'ar' ? 'شرق' : 'East'}</option>
+                        <option value="west" className="bg-obsidian">{language === 'ar' ? 'غرب' : 'West'}</option>
+                      </select>
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'الإطلالة' : 'View'}>
+                      <select
+                        value={bulkUnitForm.view}
+                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, view: e.target.value }))}
+                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                      >
+                        <option value="front" className="bg-obsidian">{language === 'ar' ? 'أمامي' : 'Front'}</option>
+                        <option value="back" className="bg-obsidian">{language === 'ar' ? 'خلفي' : 'Back'}</option>
+                        <option value="side" className="bg-obsidian">{language === 'ar' ? 'جانبي' : 'Side'}</option>
+                      </select>
+                    </FormField>
+
+                    <FormField label={language === 'ar' ? 'بادئة رمز الوحدة' : 'Unit Code Prefix'}>
+                      <input
+                        type="text"
+                        value={bulkUnitForm.unitPrefix}
+                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, unitPrefix: e.target.value }))}
+                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                        placeholder="A"
+                        maxLength={3}
+                      />
+                      <p className="text-xs text-stone-gray mt-1">
+                        {language === 'ar' ? 'مثال: A سينتج PRJ-01-A101-A2' : 'Example: A will produce PRJ-1-A1, PRJ-001-A2'}
+                      </p>
+                    </FormField>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="mt-8">
+                  <FormField label={language === 'ar' ? 'الوصف' : 'Description'}>
+                    <textarea
+                      value={bulkUnitForm.description}
+                      onChange={(e) => setBulkUnitForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                      className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                      placeholder={language === 'ar' ? 'معلومات إضافية (مثل جودة التشطيب، المميزات الخاصة)' : 'Additional info (e.g., finishing quality, special features)'}
+                    />
+                  </FormField>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6">
+                <div className="flex space-x-3 rtl:space-x-reverse">
+                  <motion.button
+                    onClick={saveTemplate}
+                    disabled={!bulkUnitForm.designName}
+                    className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300 disabled:opacity-50 isabled:cursor-not-allowed flex items-center space-x-2 rtl:space-x-reverse"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'حفظ كقالب' : 'Save as Template'}</span>
+                  </motion.button>
+                </div>
+                
+                <div className="flex space-x-3 rtl:space-x-reverse">
+                  <motion.button
+                    onClick={() => setShowBulkUnitModal(false)}
+                    className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </motion.button>
+                  <motion.button
+                    onClick={generatePreviewUnits}
+                    disabled={!bulkUnitForm.designName || !bulkUnitForm.area}
+                    className="px-8 y-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 disabled:opacity-50 isabled:cursor-not-allowed flex items-center space-x-2 rtl:space-x-reverse"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'معاينة الوحدات' : 'Preview Units'}</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Preview Header */}
+              <div className="bg-obsidian/70 rounded-xl p-6 border border-desert-gold/20">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="p-3 bg-green-500/20 rounded-lg mr-4">
+                      <Check className="h-6 w-6 text-green-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-desert-gold">
+                        {language === 'ar' ? 'معاينة الوحدات' : 'Units Preview'}
+                      </h4>
+                      <p className="text-stone-gray">
+                        {language === 'ar' ? `سيتم إنشاء ${previewUnits.length} وحدة` : `${previewUnits.length} units will be created`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-elegant-white">{previewUnits.length}</div>
+                    <div className="text-sm text-stone-gray">
+                      {language === 'ar' ? 'وحدة' : 'units'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  <div className="bg-stone-gray/10 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-elegant-white">{bulkUnitForm.area || 0}</div>
+                    <div className="text-xs text-stone-gray">{language === 'ar' ? 'م²' : 'm²'}</div>
+                  </div>
+                  <div className="bg-stone-gray/10 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-elegant-white">{bulkUnitForm.rooms || 0}</div>
+                    <div className="text-xs text-stone-gray">{language === 'ar' ? 'غرف' : 'Rooms'}</div>
+                  </div>
+                  <div className="bg-stone-gray/10 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-elegant-white">{bulkUnitForm.bathrooms || 0}</div>
+                    <div className="text-xs text-stone-gray">{language === 'ar' ? 'حمامات' : 'Baths'}</div>
+                  </div>
+                  <div className="bg-stone-gray/10 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-elegant-white">
+                      {parseFloat(bulkUnitForm.startingPrice || '0').toLocaleString()}
+                    </div>
+                    <div className="text-xs text-stone-gray">{language === 'ar' ? 'ريال' : 'SAR'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview Table */}
+              <div className="bg-obsidian/70 rounded-xl border border-desert-gold/20 overflow-hidden">
+                <div className="p-4 order-b border-desert-gold/20 bg-stone-gray/10">
+                  <h5 className="text-lg font-semibold text-elegant-white">
+                    {language === 'ar' ? 'قائمة الوحدات' : 'Units List'}
+                  </h5>
+                </div>
+                <div className="overflow-x-auto max-h-96">
+                  <table className="w-full">
+                    <thead className="bg-stone-gray/5 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الرمز' : 'Code'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'المساحة' : 'Area'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الدور' : 'Floor'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الغرف' : 'Rooms'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الحمامات' : 'Baths'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'السعر' : 'Price'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الحالة' : 'Status'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'إجراءات' : 'Actions'}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewUnits.map((unit, index) => (
+                        <tr key={unit.id} className={`border-t border-desert-gold/10 ${index % 2 === 0 ? 'bg-stone-gray/5' : ''}`}>
+                          <td className="px-4 py-3 text-elegant-white font-medium text-sm">{unit.code}</td>
+                          <td className="px-4 py-3 text-stone-gray text-sm">{unit.area} m²</td>
+                          <td className="px-4 py-3 text-stone-gray text-sm">{unit.floor}</td>
+                          <td className="px-4 py-3 text-stone-gray text-sm">{unit.rooms}</td>
+                          <td className="px-4 py-3 text-stone-gray text-sm">{unit.bathrooms}</td>
+                          <td className="px-4 py-3 text-stone-gray text-sm">{unit.price.toLocaleString()} SAR</td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={language === 'ar' ? 'متاح' : 'Available'} variant="success" size="sm" />
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => removePreviewUnit(unit.id)}
+                              className="text-red-400 hover:text-red-300 transition-colors duration-200 p-1 unded hover:bg-red-400/10"
+                              title={language === 'ar' ? 'حذف الوحدة' : 'Remove Unit'}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6">
+                <div className="text-stone-gray text-sm">
+                  {language === 'ar' ? 
+                    `إجمالي الوحدات: ${previewUnits.length} وحدة` : 
+                    `Total Units: ${previewUnits.length} units`
+                  }
+                </div>
+                
+                <div className="flex space-x-3 rtl:space-x-reverse">
+                  <motion.button
+                    onClick={() => setShowPreview(false)}
+                    className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <X className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'رجوع' : 'Back'}</span>
+                  </motion.button>
+                  <motion.button
+                    onClick={confirmBulkUnits}
+                    disabled={previewUnits.length === 0}
+                    className="px-8 y-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 disabled:opacity-50 isabled:cursor-not-allowed flex items-center space-x-2 rtl:space-x-reverse"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'تأكيد الإنشاء' : 'Confirm Creation'}</span>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+
+        <Modal
+          isOpen={showProjectSelectionModal}
+          onClose={() => {
+            setShowProjectSelectionModal(false);
+            setSelectedProjectForBulk(null);
+            setBulkProjectError('');
+          }}
+          title={language === 'ar' ? 'اختر المشروع للوحدات الجديدة' : 'Select Project for New Units'}
+          size="lg"
+        >
+          <div className="space-y-6">
+            <div className="bg-obsidian/70 rounded-xl p-6 border border-desert-gold/20">
+              <div className="flex items-center mb-4">
+                <div className="p-3 bg-desert-gold/20 rounded-lg mr-4">
+                  <Building2 className="h-6 w-6 text-desert-gold" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-desert-gold">
+                    {language === 'ar' ? 'اختر المشروع' : 'Select Project'}
+                  </h4>
+                  <p className="text-stone-gray text-sm">
+                    {language === 'ar' ? 'يجب اختيار مشروع قبل إنشاء الوحدات' : 'You must select a project before creating units'}
+                  </p>
+                </div>
+              </div>
+              
+              <FormField label={language === 'ar' ? 'المشروع' : 'Project'} required>
+                <select
+                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                  value={selectedProjectForBulk?.id || ''}
+                  onChange={(e) => {
+                    const proj = bulkProjects.find(p => p.id === parseInt(e.target.value));
+                    setSelectedProjectForBulk(proj || null);
+                    setBulkProjectError('');
+                  }}
+                >
+                  <option value="" className="bg-obsidian">
+                    {language === 'ar' ? 'اختر مشروعاً' : 'Select a project'}
+                  </option>
+                  {bulkProjects.map((project) => (
+                    <option key={project.id} value={project.id} className="bg-obsidian">
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              
+              {bulkProjectError && (
+                <div className="mt-4 p-3 bg-red-500 rounded-lg border border-red-500">
+                  <p className="text-red-400 text-sm">{bulkProjectError}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end space-x-3 rtl:space-x-reverse">
+              <motion.button
+                onClick={() => {
+                  setShowProjectSelectionModal(false);
+                  setSelectedProjectForBulk(null);
+                  setBulkProjectError('');
+                }}
+                className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </motion.button>
+              <motion.button
+                onClick={() => {
+                  if (selectedProjectForBulk) {
+                    setShowProjectSelectionModal(false);
+                    setShowBulkUnitModal(true);
+                  } else {
+                    setBulkProjectError(language === 'ar' ? 'يرجى اختيار مشروع: ' : 'Please select a project');
+                  }
+                }}
+                disabled={!selectedProjectForBulk}
+                className="px-6 py-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 disabled:opacity-50 isabled:cursor-not-allowed"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {language === 'ar' ? 'متابعة' : 'Continue'}
+              </motion.button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Excel Upload Modal */}
+        <Modal
+          isOpen={showExcelUpload}
+          onClose={() => {
+            setShowExcelUpload(false);
+            setExcelPreviewData([]);
+            setExcelFile(null);
+          }}
+          title={language === 'ar' ? 'استيراد ملف Excel' : 'Excel Import'}
+          size="xl"
+        >
+          <div className="space-y-8">
+            {/* Excel Upload Instructions */}
+            <div className="bg-obsidian/70 rounded-xl p-6 border border-desert-gold/20">
+              <div className="flex items-center mb-4">
+                <div className="p-3 bg-blue-500/20 rounded-lg mr-4">
+                  <Upload className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-desert-gold">
+                    {language === 'ar' ? 'تنسيق الملف المطلوب' : 'Required File Format'}
+                  </h4>
+                  <p className="text-stone-gray text-sm">
+                    {language === 'ar' ? 'يجب أن يحتوي الملف على الأعمدة التالية:' : 'The file must contain the following columns:'}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
+                <code className="text-elegant-white text-sm font-mono">
+                  project_name, Unit Code, Design Name, Area, Floor, Rooms, Baths, View, Orientation, Price, Status
+                </code>
+              </div>
+              <div className="mt-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500">
+                <p className="text-yellow-400 text-sm">
+                  {language === 'ar' ? 'ملاحظة: تأكد من أن الملف بصيغة CSV أو Excel وأن الأعمدة بالترتيب الصحيح' : 'Note: Ensure the file is in CSV or Excel format with columns in the correct order'}
+                </p>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="bg-obsidian/70 rounded-xl p-8 border border-desert-gold/20">
+              <div className="flex items-center mb-6">
+                <div className="p-3 bg-desert-gold/20 rounded-lg mr-4">
+                  <FileText className="h-6 w-6 text-desert-gold" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-desert-gold">
+                    {language === 'ar' ? 'رفع الملف' : 'Upload File'}
+                  </h4>
+                  <p className="text-stone-gray text-sm">
+                    {language === 'ar' ? 'اختر ملف Excel أو CSV يحتوي على بيانات الوحدات' : 'Select an Excel or CSV file containing unit data'}
+                  </p>
+                </div>
+              </div>
+              
+              <FormField label={language === 'ar' ? 'اختر ملف Excel' : 'Select Excel File'}>
+                <div className="border-2 border-dashed border-desert-gold/30 rounded-xl p-8 text-center hover:border-desert-gold/50 transition-colors duration-300">
+                  <Upload className="h-12 w-12 text-desert-gold mx-auto mb-4" />
+                  <p className="text-stone-gray mb-2 text-lg">
+                    {language === 'ar' ? 'اسحب وأفلت ملف Excel هنا : Drag and drop Excel file here' : 'Or click to select file from your device'}
+                  </p>
+                  <p className="text-stone-gray text-sm mb-4">
+                    {language === 'ar' ? 'أو انقر لاختيار الملف من جهازك' : 'Or click to select file from your device'}
+                  </p>
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setExcelFile(file);
+                        handleExcelUpload(file);
+                      }
+                    }}
+                    className="hidden"
+                    id="excel-upload"
+                  />
+                  <label htmlFor="excel-upload" className="cursor-pointer">
+                    <button className="bg-desert-gold text-deep-black px-6 py-3 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse mx-auto">
+                      <Upload className="h-4 w-4" />
+                      <span>{language === 'ar' ? 'اختر الملف' : 'Choose File'}</span>
+                    </button>
+                  </label>
+                </div>
+              </FormField>
+              
+              {excelFile && (
+                <div className="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Check className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-green-400 font-medium">{excelFile.name}</span>
+                    </div>
+                    <span className="text-stone-gray text-sm">
+                      {Math.round(excelFile.size / 1024 / 1024)} MB
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Excel Preview */}
+            {excelPreviewData.length > 0 && (
+              <div className="bg-obsidian/70 rounded-xl border border-desert-gold/20 overflow-hidden">
+                <div className="p-6 order-b border-desert-gold/20 bg-stone-gray/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-green-500/20 rounded-lg mr-4">
+                        <Check className="h-6 w-6 text-green-500" />
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold text-desert-gold">
+                          {language === 'ar' ? 'معاينة البيانات' : 'Data Preview'}
+                        </h4>
+                        <p className="text-stone-gray text-sm">
+                          {language === 'ar' ? `${excelPreviewData.length} وحدة للاستيراد` : `${excelPreviewData.length} units to import`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-elegant-white">{excelPreviewData.length}</div>
+                      <div className="text-sm text-stone-gray">
+                        {language === 'ar' ? 'وحدة' : 'units'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="overflow-x-auto max-h-96">
+                  <table className="w-full">
+                    <thead className="bg-stone-gray/5 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الرمز' : 'Code'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الاسم' : 'Name'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'المساحة' : 'Area'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الدور' : 'Floor'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الغرف' : 'Rooms'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'الحمامات' : 'Baths'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'السعر' : 'Price'}
+                        </th>
+                        <th className="px-4 py-3 text-left text-elegant-white font-medium text-sm">
+                          {language === 'ar' ? 'إجراءات' : 'Actions'}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {excelPreviewData.slice(0, 10).map((unit, index) => (
+                        <tr key={index} className={`border-t border-desert-gold/10 ${index % 2 === 0 ? 'bg-stone-gray/5' : ''}`}>
+                          <td className="px-4 py-3 text-elegant-white font-medium">{unit.code}</td>
+                          <td className="px-4 py-3 text-stone-gray">{unit.designName}</td>
+                          <td className="px-4 py-3 text-stone-gray">{unit.area} m²</td>
+                          <td className="px-4 py-3 text-stone-gray">{unit.floor}</td>
+                          <td className="px-4 py-3 text-stone-gray">{unit.rooms}</td>
+                          <td className="px-4 py-3 text-stone-gray">{unit.bathrooms}</td>
+                          <td className="px-4 py-3 text-stone-gray">{unit.price.toLocaleString()} SAR</td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => removeExcelUnit(index)}
+                              className="text-red-400 hover:text-red-300 transition-colors duration-200"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {excelPreviewData.length > 10 && (
+                  <div className="p-4 border-t border-desert-gold/20 text-center">
+                    <p className="text-stone-gray text-sm">
+                      {language === 'ar' ? `و ${excelPreviewData.length - 10} وحدة إضافية...` : `And ${excelPreviewData.length - 10} more units...`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6">
+              <div className="text-stone-gray text-sm">
+                {excelPreviewData.length > 0 ? (
+                  language === 'ar' ? 
+                    `إجمالي الوحدات: ${excelPreviewData.length} وحدة` : 
+                    `Total Units: ${excelPreviewData.length} units`
+                ) : (
+                  language === 'ar' ? 
+                    'لميتم اختيار ملف بعد' : 
+                    'No file selected yet'
+                )}
+              </div>
+              
+              <div className="flex space-x-3 rtl:space-x-reverse">
+                <motion.button
+                  onClick={() => {
+                    setShowExcelUpload(false);
+                    setExcelPreviewData([]);
+                    setExcelFile(null);
+                  }}
+                  className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </motion.button>
+                <motion.button
+                  onClick={confirmExcelImport}
+                  disabled={excelPreviewData.length === 0}
+                  className="px-8 y-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 disabled:opacity-50 isabled:cursor-not-allowed flex items-center space-x-2 rtl:space-x-reverse"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>{language === 'ar' ? 'تأكيد الاستيراد' : 'Confirm Import'}</span>
+                </motion.button>
+              </div>
+            </div>
+          </div>
         </Modal>
       </div>
     </PageWrapper>
