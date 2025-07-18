@@ -5,6 +5,7 @@ import { useDirection } from '@/context/DirectionContext';
 import { usePathname } from 'next/navigation';
 import { Menu, Bell, User, Globe, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import Modal from '../components/shared/Modal';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -15,6 +16,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const pathname = usePathname();
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 
   const getPageTitle = () => {
     const routes: Record<string, { ar: string; en: string }> = {
@@ -135,6 +137,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             className="relative rounded-full bg-stone-gray/10 p-2 text-stone-gray hover:text-elegant-white hover:bg-stone-gray/20 transition-all duration-200"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            onClick={() => setShowNotificationsModal(true)}
           >
             <Bell className="h-5 w-5" />
             {/* Notification badge */}
@@ -142,6 +145,53 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               3
             </span>
           </motion.button>
+
+          <Modal
+            isOpen={showNotificationsModal}
+            onClose={() => setShowNotificationsModal(false)}
+            title={language === 'ar' ? 'الإشعارات' : 'Notifications'}
+            size="sm"
+          >
+            {/* أزرار التحكم */}
+            <div className={`flex ${isRTL ? 'flex-row-reverse' : ''} gap-2 mb-4`}>
+              <button
+                onClick={() => console.log('Mark all as read')}
+                className="px-3 py-1 rounded bg-stone-gray/20 text-stone-gray hover:bg-desert-gold/20 hover:text-desert-gold text-xs font-medium transition-colors duration-200"
+              >
+                {language === 'ar' ? 'تمييز الكل كمقروء' : 'Mark all as read'}
+              </button>
+              <button
+                onClick={() => console.log('Delete all notifications')}
+                className="px-3 py-1 rounded bg-stone-gray/20 text-stone-gray hover:bg-red-500/20 hover:text-red-400 text-xs font-medium transition-colors duration-200"
+              >
+                {language === 'ar' ? 'حذف الكل' : 'Delete all'}
+              </button>
+            </div>
+            <div className="space-y-4">
+              {/* إشعارات وهمية */}
+              <div className="bg-stone-gray/10 rounded-lg p-4 flex items-start gap-3">
+                <Bell className="h-5 w-5 text-desert-gold mt-1" />
+                <div>
+                  <div className="text-elegant-white font-medium">{language === 'ar' ? 'تم إضافة طلب جديد' : 'New request added'}</div>
+                  <div className="text-stone-gray text-xs mt-1">{language === 'ar' ? 'منذ دقيقة واحدة' : '1 minute ago'}</div>
+                </div>
+              </div>
+              <div className="bg-stone-gray/10 rounded-lg p-4 flex items-start gap-3">
+                <Bell className="h-5 w-5 text-desert-gold mt-1" />
+                <div>
+                  <div className="text-elegant-white font-medium">{language === 'ar' ? 'تم تحديث حالة مشروع' : 'Project status updated'}</div>
+                  <div className="text-stone-gray text-xs mt-1">{language === 'ar' ? 'منذ 5 دقائق' : '5 minutes ago'}</div>
+                </div>
+              </div>
+              <div className="bg-stone-gray/10 rounded-lg p-4 flex items-start gap-3">
+                <Bell className="h-5 w-5 text-desert-gold mt-1" />
+                <div>
+                  <div className="text-elegant-white font-medium">{language === 'ar' ? 'تمت إضافة مستخدم جديد' : 'New user added'}</div>
+                  <div className="text-stone-gray text-xs mt-1">{language === 'ar' ? 'منذ 10 دقائق' : '10 minutes ago'}</div>
+                </div>
+              </div>
+            </div>
+          </Modal>
 
           {/* Separator */}
           <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-desert-gold/20" />

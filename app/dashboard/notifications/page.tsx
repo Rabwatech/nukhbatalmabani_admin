@@ -9,6 +9,7 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
 
 export default function NotificationsPage() {
   const { language } = useDirection();
@@ -625,37 +626,33 @@ export default function NotificationsPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'إلى' : 'To'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر المستلم' : 'Select Recipient'}
-                  </option>
-                  <option value="all" className="bg-obsidian">
-                    {language === 'ar' ? 'جميع الفريق' : 'All Team'}
-                  </option>
-                  <option value="fatima" className="bg-obsidian">
-                    {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                  </option>
-                  <option value="ahmed" className="bg-obsidian">
-                    {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                  </option>
-                  <option value="khalid" className="bg-obsidian">
-                    {language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'unassigned', label: { ar: 'اختر المستلم', en: 'Select Recipient' } },
+                    { value: 'all', label: { ar: 'جميع الفريق', en: 'All Team' } },
+                    { value: 'fatima', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                    { value: 'ahmed', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                    { value: 'khalid', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                  ]}
+                  value=""
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر المستلم' : 'Select Recipient'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'الأولوية' : 'Priority'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="normal" className="bg-obsidian">
-                    {language === 'ar' ? 'عادية' : 'Normal'}
-                  </option>
-                  <option value="high" className="bg-obsidian">
-                    {language === 'ar' ? 'عالية' : 'High'}
-                  </option>
-                  <option value="low" className="bg-obsidian">
-                    {language === 'ar' ? 'منخفضة' : 'Low'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'normal', label: { ar: 'عادية', en: 'Normal' } },
+                    { value: 'high', label: { ar: 'عالية', en: 'High' } },
+                    { value: 'low', label: { ar: 'منخفضة', en: 'Low' } }
+                  ]}
+                  value="normal"
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الأولوية' : 'Select Priority'}
+                  language={language}
+                />
               </FormField>
             </div>
 
@@ -723,23 +720,18 @@ export default function NotificationsPage() {
               </FormField>
 
               <FormField label={language === 'ar' ? 'النوع' : 'Type'} required>
-                <select
-                  defaultValue={selectedItem?.type || 'task'}
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                >
-                  <option value="payment" className="bg-obsidian">
-                    {language === 'ar' ? 'دفعة' : 'Payment'}
-                  </option>
-                  <option value="meeting" className="bg-obsidian">
-                    {language === 'ar' ? 'اجتماع' : 'Meeting'}
-                  </option>
-                  <option value="handover" className="bg-obsidian">
-                    {language === 'ar' ? 'تسليم' : 'Handover'}
-                  </option>
-                  <option value="task" className="bg-obsidian">
-                    {language === 'ar' ? 'مهمة' : 'Task'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'payment', label: { ar: 'دفعة', en: 'Payment' } },
+                    { value: 'meeting', label: { ar: 'اجتماع', en: 'Meeting' } },
+                    { value: 'handover', label: { ar: 'تسليم', en: 'Handover' } },
+                    { value: 'task', label: { ar: 'مهمة', en: 'Task' } }
+                  ]}
+                  value={selectedItem?.type || 'task'}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر النوع' : 'Select Type'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'تاريخ الاستحقاق' : 'Due Date'} required>
@@ -751,40 +743,32 @@ export default function NotificationsPage() {
               </FormField>
 
               <FormField label={language === 'ar' ? 'المكلف' : 'Assign To'} required>
-                <select
-                  defaultValue=""
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                >
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الموظف' : 'Select Staff'}
-                  </option>
-                  <option value="fatima" className="bg-obsidian">
-                    {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                  </option>
-                  <option value="ahmed" className="bg-obsidian">
-                    {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                  </option>
-                  <option value="khalid" className="bg-obsidian">
-                    {language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'unassigned', label: { ar: 'اختر الموظف', en: 'Select Staff' } },
+                    { value: 'fatima', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                    { value: 'ahmed', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                    { value: 'khalid', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                  ]}
+                  value=""
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الموظف' : 'Select Staff'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'الأولوية' : 'Priority'} required>
-                <select
-                  defaultValue={selectedItem?.priority || 'medium'}
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                >
-                  <option value="low" className="bg-obsidian">
-                    {language === 'ar' ? 'منخفضة' : 'Low'}
-                  </option>
-                  <option value="medium" className="bg-obsidian">
-                    {language === 'ar' ? 'متوسطة' : 'Medium'}
-                  </option>
-                  <option value="high" className="bg-obsidian">
-                    {language === 'ar' ? 'عالية' : 'High'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'low', label: { ar: 'منخفضة', en: 'Low' } },
+                    { value: 'medium', label: { ar: 'متوسطة', en: 'Medium' } },
+                    { value: 'high', label: { ar: 'عالية', en: 'High' } }
+                  ]}
+                  value={selectedItem?.priority || 'medium'}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الأولوية' : 'Select Priority'}
+                  language={language}
+                />
               </FormField>
             </div>
 

@@ -16,7 +16,8 @@ import {
   BarChart3, 
   Bell,
   X,
-  ChevronRight
+  ChevronRight,
+  Wrench
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -70,6 +71,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       icon: Headphones,
       label: language === 'ar' ? 'خدمة ما بعد البيع' : 'After-Sales Support',
       href: '/dashboard/support'
+    },
+    {
+      id: 'maintenance-tasks',
+      icon: Wrench,
+      label: language === 'ar' ? 'المهام والصيانة' : 'Maintenance Tasks',
+      href: '/dashboard/maintenance-tasks'
     },
     {
       id: 'team',

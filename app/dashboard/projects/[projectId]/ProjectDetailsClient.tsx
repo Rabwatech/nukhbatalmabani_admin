@@ -6,6 +6,7 @@ import StatusBadge from '../../components/shared/StatusBadge';
 import Modal from '../../components/shared/Modal';
 import FormField from '../../components/shared/FormField';
 import { ArrowLeft, Loader2, Edit, Trash2, Plus, FileSpreadsheet, FlaskConical, FileText, RefreshCw, Eye, Pencil, Trash, ShoppingCart, FileSignature } from 'lucide-react';
+import SelectContext from '@/components/ui/select-context';
 
 interface Project {
   id: number;
@@ -315,17 +316,29 @@ export default function ProjectDetailsClient({ projectId }: { projectId: string 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-stone-gray mb-2">النوع</label>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300" value={filters.type} onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}>
-                  <option value="">جميع الأنواع</option>
-                  {unitTypes.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'جميع الأنواع', en: 'All Types' } },
+                    ...unitTypes.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))
+                  ]}
+                  value={filters.type}
+                  onChange={value => setFilters(f => ({ ...f, type: value }))}
+                  placeholder="جميع الأنواع"
+                  language="ar"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-gray mb-2">عدد الغرف</label>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300" value={filters.bedrooms} onChange={e => setFilters(f => ({ ...f, bedrooms: e.target.value }))}>
-                  <option value="">جميع الغرف</option>
-                  {bedroomOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'جميع الغرف', en: 'All Rooms' } },
+                    ...bedroomOptions.map(opt => ({ value: opt.toString(), label: { ar: opt.toString(), en: opt.toString() } }))
+                  ]}
+                  value={filters.bedrooms}
+                  onChange={value => setFilters(f => ({ ...f, bedrooms: value }))}
+                  placeholder="جميع الغرف"
+                  language="ar"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-gray mb-2">الدور</label>
@@ -333,17 +346,29 @@ export default function ProjectDetailsClient({ projectId }: { projectId: string 
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-gray mb-2">الحالة</label>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300" value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}>
-                  <option value="">جميع الحالات</option>
-                  {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'جميع الحالات', en: 'All Statuses' } },
+                    ...statusOptions.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))
+                  ]}
+                  value={filters.status}
+                  onChange={value => setFilters(f => ({ ...f, status: value }))}
+                  placeholder="جميع الحالات"
+                  language="ar"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-gray mb-2">الاتجاه</label>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300" value={filters.orientation} onChange={e => setFilters(f => ({ ...f, orientation: e.target.value }))}>
-                  <option value="">جميع الاتجاهات</option>
-                  {orientationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'جميع الاتجاهات', en: 'All Orientations' } },
+                    ...orientationOptions.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))
+                  ]}
+                  value={filters.orientation}
+                  onChange={value => setFilters(f => ({ ...f, orientation: value }))}
+                  placeholder="جميع الاتجاهات"
+                  language="ar"
+                />
               </div>
             </div>
           </div>
@@ -415,10 +440,13 @@ export default function ProjectDetailsClient({ projectId }: { projectId: string 
                 <input className="input w-full" type="number" value={addUnitForm.area} onChange={e => setAddUnitForm(f => ({ ...f, area: e.target.value }))} />
               </FormField>
               <FormField label="عدد الغرف" required error={addUnitErrors.rooms}>
-                <select className="input w-full" value={addUnitForm.rooms} onChange={e => setAddUnitForm(f => ({ ...f, rooms: e.target.value }))}>
-                  <option value="">اختر</option>
-                  {bedroomOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                <SelectContext
+                  options={bedroomOptions.map(opt => ({ value: opt.toString(), label: { ar: opt.toString(), en: opt.toString() } }))}
+                  value={addUnitForm.rooms}
+                  onChange={value => setAddUnitForm(f => ({ ...f, rooms: value }))}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
               <FormField label="الدور" required error={addUnitErrors.floor}>
                 <input className="input w-full" type="number" value={addUnitForm.floor} onChange={e => setAddUnitForm(f => ({ ...f, floor: e.target.value }))} />
@@ -427,22 +455,31 @@ export default function ProjectDetailsClient({ projectId }: { projectId: string 
                 <input className="input w-full" type="number" value={addUnitForm.price} onChange={e => setAddUnitForm(f => ({ ...f, price: e.target.value }))} />
               </FormField>
               <FormField label="الحالة" required error={addUnitErrors.status}>
-                <select className="input w-full" value={addUnitForm.status} onChange={e => setAddUnitForm(f => ({ ...f, status: e.target.value }))}>
-                  <option value="">اختر</option>
-                  {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={statusOptions.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))}
+                  value={addUnitForm.status}
+                  onChange={value => setAddUnitForm(f => ({ ...f, status: value }))}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
               <FormField label="الاتجاه" required error={addUnitErrors.orientation}>
-                <select className="input w-full" value={addUnitForm.orientation} onChange={e => setAddUnitForm(f => ({ ...f, orientation: e.target.value }))}>
-                  <option value="">اختر</option>
-                  {orientationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={orientationOptions.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))}
+                  value={addUnitForm.orientation}
+                  onChange={value => setAddUnitForm(f => ({ ...f, orientation: value }))}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
               <FormField label="النوع" required error={addUnitErrors.type}>
-                <select className="input w-full" value={addUnitForm.type} onChange={e => setAddUnitForm(f => ({ ...f, type: e.target.value }))}>
-                  <option value="">اختر</option>
-                  {unitTypes.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={unitTypes.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))}
+                  value={addUnitForm.type}
+                  onChange={value => setAddUnitForm(f => ({ ...f, type: value }))}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
             </div>
             <div className="flex justify-end gap-2 mt-6">
@@ -466,10 +503,13 @@ export default function ProjectDetailsClient({ projectId }: { projectId: string 
                 <input className="input w-full" type="number" value={showEditUnitModal?.area} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, area: Number(e.target.value) } : null)} />
               </FormField>
               <FormField label="عدد الغرف" required error={addUnitErrors.rooms}>
-                <select className="input w-full" value={showEditUnitModal?.rooms} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, rooms: Number(e.target.value) } : null)}>
-                  <option value="">اختر</option>
-                  {bedroomOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                <SelectContext
+                  options={bedroomOptions.map(opt => ({ value: opt.toString(), label: { ar: opt.toString(), en: opt.toString() } }))}
+                  value={showEditUnitModal?.rooms?.toString() || ''}
+                  onChange={value => setShowEditUnitModal(prev => prev ? { ...prev, rooms: Number(value) } : null)}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
               <FormField label="الدور" required error={addUnitErrors.floor}>
                 <input className="input w-full" type="number" value={showEditUnitModal?.floor} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, floor: Number(e.target.value) } : null)} />
@@ -478,22 +518,31 @@ export default function ProjectDetailsClient({ projectId }: { projectId: string 
                 <input className="input w-full" type="number" value={showEditUnitModal?.price} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, price: Number(e.target.value) } : null)} />
               </FormField>
               <FormField label="الحالة" required error={addUnitErrors.status}>
-                <select className="input w-full" value={showEditUnitModal?.status} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, status: e.target.value } : null)}>
-                  <option value="">اختر</option>
-                  {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={statusOptions.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))}
+                  value={showEditUnitModal?.status || ''}
+                  onChange={value => setShowEditUnitModal(prev => prev ? { ...prev, status: value } : null)}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
               <FormField label="الاتجاه" required error={addUnitErrors.orientation}>
-                <select className="input w-full" value={showEditUnitModal?.orientation} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, orientation: e.target.value } : null)}>
-                  <option value="">اختر</option>
-                  {orientationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={orientationOptions.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))}
+                  value={showEditUnitModal?.orientation || ''}
+                  onChange={value => setShowEditUnitModal(prev => prev ? { ...prev, orientation: value } : null)}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
               <FormField label="النوع" required error={addUnitErrors.type}>
-                <select className="input w-full" value={showEditUnitModal?.type} onChange={e => setShowEditUnitModal(prev => prev ? { ...prev, type: e.target.value } : null)}>
-                  <option value="">اختر</option>
-                  {unitTypes.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                <SelectContext
+                  options={unitTypes.map(opt => ({ value: opt.value, label: { ar: opt.label, en: opt.label } }))}
+                  value={showEditUnitModal?.type || ''}
+                  onChange={value => setShowEditUnitModal(prev => prev ? { ...prev, type: value } : null)}
+                  placeholder="اختر"
+                  language="ar"
+                />
               </FormField>
             </div>
             <div className="flex justify-end gap-2 mt-6">

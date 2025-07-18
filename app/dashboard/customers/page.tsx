@@ -9,6 +9,7 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
 
 export default function CustomersPage() {
   const { language, isRTL } = useDirection();
@@ -262,6 +263,46 @@ export default function CustomersPage() {
     }
   ];
 
+  const getStatusKey = (status: string) => {
+    switch (status) {
+      case 'interested':
+        return 'interested';
+      case 'booked':
+        return 'booked';
+      case 'contracted':
+        return 'contracted';
+      case 'owner':
+        return 'owner';
+      default:
+        return '';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, { ar: string; en: string }> = {
+      interested: { ar: 'مهتم', en: 'Interested' },
+      booked: { ar: 'محجوز', en: 'Booked' },
+      contracted: { ar: 'موقّع', en: 'Contracted' },
+      owner: { ar: 'مالك', en: 'Owner' }
+    };
+    return labels[status]?.[language] || status;
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'interested':
+        return 'info';
+      case 'booked':
+        return 'warning';
+      case 'contracted':
+        return 'success';
+      case 'owner':
+        return 'default';
+      default:
+        return 'default';
+    }
+  };
+
   // Filter customers based on active tab and search term
   const filteredCustomers = customers.filter(customer => {
     // Filter by tab
@@ -319,46 +360,6 @@ export default function CustomersPage() {
 
     return true;
   });
-
-  const getStatusKey = (status: string) => {
-    switch (status) {
-      case 'interested':
-        return 'interested';
-      case 'booked':
-        return 'booked';
-      case 'contracted':
-        return 'contracted';
-      case 'owner':
-        return 'owner';
-      default:
-        return '';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, { ar: string; en: string }> = {
-      interested: { ar: 'مهتم', en: 'Interested' },
-      booked: { ar: 'محجوز', en: 'Booked' },
-      contracted: { ar: 'موقّع', en: 'Contracted' },
-      owner: { ar: 'مالك', en: 'Owner' }
-    };
-    return labels[status]?.[language] || status;
-  };
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'interested':
-        return 'info';
-      case 'booked':
-        return 'warning';
-      case 'contracted':
-        return 'success';
-      case 'owner':
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
 
   const tabs = [
     { id: 'all', label: language === 'ar' ? 'جميع العملاء' : 'All Customers' },
@@ -518,27 +519,19 @@ export default function CustomersPage() {
               <label className="block text-sm font-medium text-stone-gray mb-2">
                 {language === 'ar' ? 'الحالة' : 'Status'}
               </label>
-              <select
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع الحالات', en: 'All Statuses' } },
+                  { value: 'interested', label: { ar: 'مهتم', en: 'Interested' } },
+                  { value: 'booked', label: { ar: 'محجوز', en: 'Booked' } },
+                  { value: 'contracted', label: { ar: 'موقّع', en: 'Contracted' } },
+                  { value: 'owner', label: { ar: 'مالك', en: 'Owner' } }
+                ]}
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-              >
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'جميع الحالات' : 'All Statuses'}
-                </option>
-                <option value="interested" className="bg-obsidian">
-                  {language === 'ar' ? 'مهتم' : 'Interested'}
-                </option>
-                <option value="booked" className="bg-obsidian">
-                  {language === 'ar' ? 'محجوز' : 'Booked'}
-                </option>
-                <option value="contracted" className="bg-obsidian">
-                  {language === 'ar' ? 'موقّع' : 'Contracted'}
-                </option>
-                <option value="owner" className="bg-obsidian">
-                  {language === 'ar' ? 'مالك' : 'Owner'}
-                </option>
-              </select>
+                onChange={setStatusFilter}
+                placeholder={language === 'ar' ? 'جميع الحالات' : 'All Statuses'}
+                language={language}
+              />
             </div>
 
             {/* Project Filter */}
@@ -546,20 +539,19 @@ export default function CustomersPage() {
               <label className="block text-sm font-medium text-stone-gray mb-2">
                 {language === 'ar' ? 'المشروع' : 'Project'}
               </label>
-              <select
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع المشاريع', en: 'All Projects' } },
+                  ...projects.map((project) => ({
+                    value: project.id.toString(),
+                    label: { ar: project.name, en: project.name }
+                  }))
+                ]}
                 value={projectFilter}
-                onChange={(e) => setProjectFilter(e.target.value)}
-                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-              >
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'جميع المشاريع' : 'All Projects'}
-                </option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id} className="bg-obsidian">
-                    {project.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setProjectFilter}
+                placeholder={language === 'ar' ? 'جميع المشاريع' : 'All Projects'}
+                language={language}
+              />
             </div>
 
             {/* Date Filter */}
@@ -567,24 +559,18 @@ export default function CustomersPage() {
               <label className="block text-sm font-medium text-stone-gray mb-2">
                 {language === 'ar' ? 'تاريخ الإضافة' : 'Creation Date'}
               </label>
-              <select
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع التواريخ', en: 'All Dates' } },
+                  { value: 'today', label: { ar: 'اليوم', en: 'Today' } },
+                  { value: 'this-week', label: { ar: 'هذا الأسبوع', en: 'This Week' } },
+                  { value: 'this-month', label: { ar: 'هذا الشهر', en: 'This Month' } }
+                ]}
                 value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-              >
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'جميع التواريخ' : 'All Dates'}
-                </option>
-                <option value="today" className="bg-obsidian">
-                  {language === 'ar' ? 'اليوم' : 'Today'}
-                </option>
-                <option value="this-week" className="bg-obsidian">
-                  {language === 'ar' ? 'هذا الأسبوع' : 'This Week'}
-                </option>
-                <option value="this-month" className="bg-obsidian">
-                  {language === 'ar' ? 'هذا الشهر' : 'This Month'}
-                </option>
-              </select>
+                onChange={setDateFilter}
+                placeholder={language === 'ar' ? 'جميع التواريخ' : 'All Dates'}
+                language={language}
+              />
             </div>
 
             {/* Assigned To Filter */}
@@ -592,24 +578,18 @@ export default function CustomersPage() {
               <label className="block text-sm font-medium text-stone-gray mb-2">
                 {language === 'ar' ? 'المسؤول' : 'Assigned To'}
               </label>
-              <select
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع الموظفين', en: 'All Staff' } },
+                  { value: language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                  { value: language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                  { value: language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                ]}
                 value={assignedFilter}
-                onChange={(e) => setAssignedFilter(e.target.value)}
-                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-              >
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'جميع الموظفين' : 'All Staff'}
-                </option>
-                <option value={language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'} className="bg-obsidian">
-                  {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                </option>
-                <option value={language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'} className="bg-obsidian">
-                  {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                </option>
-                <option value={language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'} className="bg-obsidian">
-                  {language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'}
-                </option>
-              </select>
+                onChange={setAssignedFilter}
+                placeholder={language === 'ar' ? 'جميع الموظفين' : 'All Staff'}
+                language={language}
+              />
             </div>
           </div>
         </div>
@@ -732,44 +712,34 @@ export default function CustomersPage() {
 
                 {/* Status */}
                 <FormField label={language === 'ar' ? 'الحالة' : 'Status'} required>
-                  <select
-                    defaultValue={selectedCustomer?.status || 'interested'}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="interested" className="bg-obsidian">
-                      {language === 'ar' ? 'مهتم' : 'Interested'}
-                    </option>
-                    <option value="booked" className="bg-obsidian">
-                      {language === 'ar' ? 'محجوز' : 'Booked'}
-                    </option>
-                    <option value="contracted" className="bg-obsidian">
-                      {language === 'ar' ? 'موقّع' : 'Contracted'}
-                    </option>
-                    <option value="owner" className="bg-obsidian">
-                      {language === 'ar' ? 'مالك' : 'Owner'}
-                    </option>
-                  </select>
+                  <SelectContext
+                    options={[
+                      { value: 'interested', label: { ar: 'مهتم', en: 'Interested' } },
+                      { value: 'booked', label: { ar: 'محجوز', en: 'Booked' } },
+                      { value: 'contracted', label: { ar: 'موقّع', en: 'Contracted' } },
+                      { value: 'owner', label: { ar: 'مالك', en: 'Owner' } }
+                    ]}
+                    value={selectedCustomer?.status || 'interested'}
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر الحالة' : 'Select Status'}
+                    language={language}
+                  />
                 </FormField>
 
                 {/* Assigned To */}
                 <FormField label={language === 'ar' ? 'المسؤول' : 'Assigned To'} required>
-                  <select
-                    defaultValue={selectedCustomer?.assignedTo || ''}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="" className="bg-obsidian">
-                      {language === 'ar' ? 'اختر الموظف' : 'Select Employee'}
-                    </option>
-                    <option value={language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'} className="bg-obsidian">
-                      {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                    </option>
-                    <option value={language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'} className="bg-obsidian">
-                      {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                    </option>
-                    <option value={language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'} className="bg-obsidian">
-                      {language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'}
-                    </option>
-                  </select>
+                  <SelectContext
+                                      options={[
+                    { value: 'unassigned', label: { ar: 'اختر الموظف', en: 'Select Employee' } },
+                    { value: language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                    { value: language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                    { value: language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                  ]}
+                    value={selectedCustomer?.assignedTo || ''}
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر الموظف' : 'Select Employee'}
+                    language={language}
+                  />
                 </FormField>
               </div>
             </div>
@@ -834,38 +804,26 @@ export default function CustomersPage() {
                 <div className="mt-4 space-y-6">
                   {/* Project Selection */}
                   <FormField label={language === 'ar' ? 'المشروع' : 'Project'}>
-                    <select
+                    <SelectContext
+                      options={projects.map(project => ({ value: project.id.toString(), label: { ar: project.name, en: project.name } }))}
                       value={selectedProject}
-                      onChange={handleProjectChange}
-                      className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    >
-                      <option value="" className="bg-obsidian">
-                        {language === 'ar' ? 'اختر المشروع' : 'Select Project'}
-                      </option>
-                      {projects.map((project) => (
-                        <option key={project.id} value={project.id} className="bg-obsidian">
-                          {project.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={value => setSelectedProject(value)}
+                      placeholder={language === 'ar' ? 'اختر المشروع' : 'Select Project'}
+                      language={language}
+                    />
                   </FormField>
 
                   {selectedProject && (
                     <>
                       {/* Unit Selection */}
                       <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'}>
-                        <select
-                          className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                        >
-                          <option value="" className="bg-obsidian">
-                            {language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
-                          </option>
-                          {projects.find(p => p.id.toString() === selectedProject)?.units.map((unit) => (
-                            <option key={unit.id} value={unit.id} className="bg-obsidian">
-                              {unit.id} - {unit.type}
-                            </option>
-                          ))}
-                        </select>
+                        <SelectContext
+                          options={projects.find(p => p.id.toString() === selectedProject)?.units.map(unit => ({ value: unit.id, label: { ar: `${unit.id} - ${unit.type}`, en: `${unit.id} - ${unit.type}` } })) || []}
+                          value={''}
+                          onChange={() => {}}
+                          placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
+                          language={language}
+                        />
                       </FormField>
 
                       {/* Property Type */}

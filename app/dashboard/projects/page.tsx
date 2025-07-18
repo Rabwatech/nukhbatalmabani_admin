@@ -10,6 +10,9 @@ import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
 import { useRouter } from 'next/navigation';
+import SelectContext from '@/components/ui/select-context';
+import UploadLabel from '@/components/ui/UploadLabel';
+import * as XLSX from 'xlsx';
 
 interface ProjectFeature {
   id: string;
@@ -499,39 +502,52 @@ export default function ProjectsPage() {
   const handleExcelUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
-      const projectNameIdx = headers.indexOf('project_name');
-      if (projectNameIdx === -1) {
+      let data: any[] = [];
+      let headers: string[] = [];
+      try {
+        const binary = e.target?.result;
+        let workbook;
+        if (file.name.endsWith('.csv')) {
+          workbook = XLSX.read(binary, { type: 'string' });
+        } else {
+          workbook = XLSX.read(binary, { type: 'array' });
+        }
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        headers = Object.keys(data[0] || {});
+      } catch (err) {
+        setBulkProjectError(language === 'ar' ? 'ملف غير صالح أو صيغة غير مدعومة' : 'Invalid or unsupported file format');
+        setShowExcelUpload(true);
+        return;
+      }
+      if (!headers.includes('project_name')) {
         setBulkProjectError(language === 'ar' ? 'ملف Excel يجب أن يحتوي على عمود project_name' : 'Excel file must contain a project_name column');
         setShowExcelUpload(true);
         return;
       }
-      const data = lines.slice(1).filter(line => line.trim()).map(line => {
-        const values = line.split(',');
-        return {
-          project_name: values[projectNameIdx]?.trim(),
-          code: values[0]?.trim(),
-          designName: values[1]?.trim(),
-          area: parseFloat(values[2]) || 0,
-          floor: parseInt(values[3]) || 0,
-          rooms: parseInt(values[4]) || 0,
-          bathrooms: parseInt(values[5]) || 0,
-          view: values[6]?.trim(),
-          orientation: values[7]?.trim(),
-          price: parseFloat(values[8]) || 0,
-          status: values[9]?.trim() || 'available',
-          project_id: undefined as number | undefined
-        };
-      });
+      // Map data
+      const mapped = data.map((row: any) => ({
+        project_name: (row['project_name'] || '').toString().trim(),
+        code: (row['Unit Code'] || row['code'] || '').toString().trim(),
+        designName: (row['Design Name'] || row['designName'] || '').toString().trim(),
+        area: parseFloat(row['Area'] || row['area'] || '0') || 0,
+        floor: parseInt(row['Floor'] || row['floor'] || '0') || 0,
+        rooms: parseInt(row['Rooms'] || row['rooms'] || '0') || 0,
+        bathrooms: parseInt(row['Baths'] || row['bathrooms'] || '0') || 0,
+        view: (row['View'] || row['view'] || '').toString().trim(),
+        orientation: (row['Orientation'] || row['orientation'] || '').toString().trim(),
+        price: parseFloat(row['Price'] || row['price'] || '0') || 0,
+        status: (row['Status'] || row['status'] || 'available').toString().trim(),
+        project_id: undefined as number | undefined
+      }));
       // Validate project_name for all rows
       const allProjects = [
         { id: 1, name: language === 'ar' ? 'مجمع الأناقة السكني' : 'Elegance Residential Complex' },
         { id: 2, name: language === 'ar' ? 'برج التجارة المركزي' : 'Central Trade Tower' },
         { id: 3, name: language === 'ar' ? 'قرية الهدوء' : 'Tranquil Village' },
       ];
-      for (const row of data) {
+      for (const row of mapped) {
         const match = allProjects.find(p => p.name === row.project_name);
         if (!match) {
           setBulkProjectError(language === 'ar' ? 'اسم المشروع غير معروف. يرجى التأكد من مطابقته تماماً للاسم في النظام.' : 'Project name not recognized. Please make sure it exactly matches the project name in the system.');
@@ -541,10 +557,14 @@ export default function ProjectsPage() {
         row.project_id = match.id;
       }
       setBulkProjectError('');
-      setExcelPreviewData(data);
+      setExcelPreviewData(mapped);
       setShowExcelUpload(true);
     };
-    reader.readAsText(file);
+    if (file.name.endsWith('.csv')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   const confirmBulkUnits = () => {
@@ -636,6 +656,8 @@ export default function ProjectsPage() {
     setShowProjectSelectionModal(true);
     fetchBulkProjects();
   };
+
+  const [dragActiveExcel, setDragActiveExcel] = useState(false);
 
   return (
     <PageWrapper>
@@ -817,8 +839,8 @@ export default function ProjectsPage() {
             <div className="bg-obsidian/50 backdrop-blur-sm rounded-xl p-8 border border-desert-gold/20">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 className="text-2xl font-bold text-elegant-white">
-                  {language === 'ar' ? 'إدارة الوحدات' : 'Unit Management'}
-                </h2>
+                {language === 'ar' ? 'إدارة الوحدات' : 'Unit Management'}
+              </h2>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <motion.button
                     onClick={handleAddBulkUnits}
@@ -847,16 +869,13 @@ export default function ProjectsPage() {
                 <label className="block text-elegant-white font-medium mb-2">
                   {language === 'ar' ? 'اختر المشروع:' : 'Select Project:'}
                 </label>
-                <select className="w-full md:w-64 bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر مشروع لإدارة وحداته' : 'Select a project to manage its units'}
-                  </option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id} className="bg-obsidian">
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
+                <SelectContext
+                  options={projects.map(project => ({ value: project.id.toString(), label: { ar: project.name, en: project.name } }))}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر مشروع لإدارة وحداته' : 'Select a project to manage its units'}
+                  language={language}
+                />
               </div>
 
               {/* Units Statistics */}
@@ -991,30 +1010,18 @@ export default function ProjectsPage() {
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'المدينة' : 'City'} required>
-                  <select
-                    name="city"
-                    defaultValue={selectedProject?.city || ''}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="" className="bg-obsidian">
-                      {language === 'ar' ? 'اختر المدينة' : 'Select City'}
-                    </option>
-                    <option value="riyadh" className="bg-obsidian">
-                      {language === 'ar' ? 'الرياض' : 'Riyadh'}
-                    </option>
-                    <option value="jeddah" className="bg-obsidian">
-                      {language === 'ar' ? 'جدة' : 'Jeddah'}
-                    </option>
-                    <option value="dammam" className="bg-obsidian">
-                      {language === 'ar' ? 'الدمام' : 'Dammam'}
-                    </option>
-                    <option value="makkah" className="bg-obsidian">
-                      {language === 'ar' ? 'مكة المكرمة' : 'Makkah'}
-                    </option>
-                    <option value="medina" className="bg-obsidian">
-                      {language === 'ar' ? 'المدينة المنورة' : 'Medina'}
-                    </option>
-                  </select>
+                  <SelectContext
+                    options={[
+                      { value: 'riyadh', label: { ar: 'الرياض', en: 'Riyadh' } },
+                      { value: 'jeddah', label: { ar: 'جدة', en: 'Jeddah' } },
+                      { value: 'dammam', label: { ar: 'الدمام', en: 'Dammam' } },
+                      { value: 'makkah', label: { ar: 'مكة المكرمة', en: 'Makkah' } },
+                    ]}
+                    value={''}
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر المدينة' : 'Select City'}
+                    language={language}
+                  />
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'المنطقة / الحي' : 'District'} required>
@@ -1078,7 +1085,7 @@ export default function ProjectsPage() {
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'مكان الإصدار' : 'Issuing Place'}>
-                  <input
+                      <input
                     type="text"
                     name="issuing_place"
                     defaultValue={selectedProject?.issuing_place || ''}
@@ -1127,45 +1134,33 @@ export default function ProjectsPage() {
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'حالة المشروع' : 'Project Status'} required>
-                  <select
-                    name="project_status"
-                    defaultValue={selectedProject?.status || 'ready'}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="ready" className="bg-obsidian">
-                      {language === 'ar' ? 'جاهز للبيع ✅' : 'Ready for Sale ✅'}
-                    </option>
-                    <option value="sold" className="bg-obsidian">
-                      {language === 'ar' ? 'تم البيع بالكامل 🏁' : 'Fully Sold 🏁'}
-                    </option>
-                    <option value="under-construction" className="bg-obsidian">
-                      {language === 'ar' ? 'قيد الإنشاء 🔨' : 'Under Construction 🔨'}
-                    </option>
-                    <option value="on-hold" className="bg-obsidian">
-                      {language === 'ar' ? 'متوقف ⏸️' : 'On Hold ⏸️'}
-                    </option>
-                  </select>
+                  <SelectContext
+                    options={[
+                      { value: 'ready', label: { ar: 'جاهز للبيع ✅', en: 'Ready for Sale ✅' } },
+                      { value: 'sold', label: { ar: 'تم البيع بالكامل 🏁', en: 'Fully Sold 🏁' } },
+                      { value: 'under-construction', label: { ar: 'قيد الإنشاء 🔨', en: 'Under Construction 🔨' } },
+                      { value: 'on-hold', label: { ar: 'متوقف ⏸️', en: 'On Hold ⏸️' } }
+                    ]}
+                    value={selectedProject?.status || 'ready'}
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر حالة المشروع' : 'Select Project Status'}
+                    language={language}
+                  />
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'مندوب المشروع' : 'Sales Representative'} required>
-                  <select
-                    name="sales_rep"
-                    defaultValue={selectedProject?.sales_rep || ''}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  >
-                    <option value="" className="bg-obsidian">
-                      {language === 'ar' ? 'اختر مندوب المشروع' : 'Select Sales Representative'}
-                    </option>
-                    <option value="ahmed" className="bg-obsidian">
-                      {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                    </option>
-                    <option value="fatima" className="bg-obsidian">
-                      {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                    </option>
-                    <option value="khalid" className="bg-obsidian">
-                      {language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'}
-                    </option>
-                  </select>
+                  <SelectContext
+                    options={[
+                      { value: 'unassigned', label: { ar: 'اختر مندوب المشروع', en: 'Select Sales Representative' } },
+                      { value: 'ahmed', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                      { value: 'fatima', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                      { value: 'khalid', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                    ]}
+                    value={selectedProject?.sales_rep || ''}
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر مندوب المشروع' : 'Select Sales Representative'}
+                    language={language}
+                  />
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'وصف المشروع' : 'Project Description'} className="md:col-span-2">
@@ -1256,21 +1251,7 @@ export default function ProjectsPage() {
 
                 <div className="space-y-6">
                   <FormField label={language === 'ar' ? 'صورة المخطط' : 'Plan Image'}>
-                    <div className="border-2 border-dashed border-desert-gold/30 rounded-lg p-4 text-center hover:border-desert-gold/50 transition-colors duration-300">
-                      <input
-                        type="file"
-                        name="plan_image"
-                        accept="image/*"
-                        className="hidden"
-                        id="plan-image"
-                      />
-                      <label htmlFor="plan-image" className="cursor-pointer">
-                        <Upload className="h-6 w-6 text-desert-gold mx-auto mb-2" />
-                        <p className="text-stone-gray text-sm">
-                          {language === 'ar' ? 'رفع صورة المخطط' : 'Upload Plan Image'}
-                        </p>
-                      </label>
-                    </div>
+                    <UploadLabel htmlFor="plan-image" label={language === 'ar' ? 'رفع صورة المخطط' : 'Upload Plan Image'} withBorder />
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'شعار المشروع' : 'Project Logo'}>
@@ -1303,7 +1284,7 @@ export default function ProjectsPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField label={language === 'ar' ? 'عدد المباني' : 'Building Count'}>
-                  <input
+                      <input
                     type="number"
                     name="building_count"
                     defaultValue={selectedProject?.building_count || ''}
@@ -1343,14 +1324,14 @@ export default function ProjectsPage() {
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
                     placeholder={language === 'ar' ? 'سعر البيع' : 'Average Price'}
                     min="0"
-                  />
+                      />
                 </FormField>
               </div>
             </div>
 
             <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-6">
               <motion.button
-                type="button"
+                        type="button"
                 onClick={() => {
                   setShowCreateModal(false);
                   setSelectedProject(null);
@@ -1366,10 +1347,10 @@ export default function ProjectsPage() {
                 className="px-6 py-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-              >
+                      >
                 {language === 'ar' ? 'حفظ' : 'Save'}
               </motion.button>
-            </div>
+                    </div>
           </form>
         </Modal>
 
@@ -1414,7 +1395,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {savedTemplates.map((template) => (
-                      <button
+                            <button
                         key={template.id}
                         onClick={() => loadTemplate(template)}
                         className={`p-4 rounded-xl border transition-all duration-300 t-left hover:scale-105 ${
@@ -1427,11 +1408,11 @@ export default function ProjectsPage() {
                         <div className="text-sm text-stone-gray space-y-1">
                           <div>{language === 'ar' ? `${template.numberOfCopies} وحدة` : `${template.numberOfCopies} units`}</div>
                           <div>{template.area} m² • {template.rooms}/{template.bathrooms}</div>
-                        </div>
+                          </div>
                       </button>
-                    ))}
+                        ))}
+                      </div>
                   </div>
-                </div>
               )}
 
               {/* Bulk Unit Form */}
@@ -1440,10 +1421,10 @@ export default function ProjectsPage() {
                   <div className="p-3 bg-desert-gold/20 rounded-lg mr-4">
                     <Building2 className="h-6 w-6 text-desert-gold" />
                   </div>
-                  <div>
+                <div>
                     <h4 className="text-xl font-bold text-desert-gold">
                       {language === 'ar' ? 'تفاصيل الوحدة' : 'Unit Details'}
-                    </h4>
+                  </h4>
                     <p className="text-stone-gray text-sm">
                       {language === 'ar' ? 'أدخل تفاصيل الوحدة التي تريد إنشاء نسخ منها : Enter details of the unit you want to create copies of' : 'Enter details of the unit you want to create copies of'}
                     </p>
@@ -1580,33 +1561,37 @@ export default function ProjectsPage() {
                     </FormField>
 
                     <FormField label={language === 'ar' ? 'الاتجاه' : 'Orientation'}>
-                      <select
+                      <SelectContext
+                        options={[
+                          { value: 'north', label: { ar: 'شمال', en: 'North' } },
+                          { value: 'south', label: { ar: 'جنوب', en: 'South' } },
+                          { value: 'east', label: { ar: 'شرق', en: 'East' } },
+                          { value: 'west', label: { ar: 'غرب', en: 'West' } }
+                        ]}
                         value={bulkUnitForm.orientation}
-                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, orientation: e.target.value }))}
-                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                      >
-                        <option value="north" className="bg-obsidian">{language === 'ar' ? 'شمال' : 'North'}</option>
-                        <option value="south" className="bg-obsidian">{language === 'ar' ? 'جنوب' : 'South'}</option>
-                        <option value="east" className="bg-obsidian">{language === 'ar' ? 'شرق' : 'East'}</option>
-                        <option value="west" className="bg-obsidian">{language === 'ar' ? 'غرب' : 'West'}</option>
-                      </select>
+                        onChange={(value) => setBulkUnitForm(prev => ({ ...prev, orientation: value }))}
+                        placeholder={language === 'ar' ? 'اختر الاتجاه' : 'Select Orientation'}
+                        language={language}
+                      />
                     </FormField>
 
                     <FormField label={language === 'ar' ? 'الإطلالة' : 'View'}>
-                      <select
+                      <SelectContext
+                        options={[
+                          { value: 'front', label: { ar: 'أمامي', en: 'Front' } },
+                          { value: 'back', label: { ar: 'خلفي', en: 'Back' } },
+                          { value: 'side', label: { ar: 'جانبي', en: 'Side' } }
+                        ]}
                         value={bulkUnitForm.view}
-                        onChange={(e) => setBulkUnitForm(prev => ({ ...prev, view: e.target.value }))}
-                        className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                      >
-                        <option value="front" className="bg-obsidian">{language === 'ar' ? 'أمامي' : 'Front'}</option>
-                        <option value="back" className="bg-obsidian">{language === 'ar' ? 'خلفي' : 'Back'}</option>
-                        <option value="side" className="bg-obsidian">{language === 'ar' ? 'جانبي' : 'Side'}</option>
-                      </select>
+                        onChange={(value) => setBulkUnitForm(prev => ({ ...prev, view: value }))}
+                        placeholder={language === 'ar' ? 'اختر الإطلالة' : 'Select View'}
+                        language={language}
+                      />
                     </FormField>
 
                     <FormField label={language === 'ar' ? 'بادئة رمز الوحدة' : 'Unit Code Prefix'}>
-                      <input
-                        type="text"
+                          <input
+                            type="text"
                         value={bulkUnitForm.unitPrefix}
                         onChange={(e) => setBulkUnitForm(prev => ({ ...prev, unitPrefix: e.target.value }))}
                         className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
@@ -1770,13 +1755,13 @@ export default function ProjectsPage() {
                             <StatusBadge status={language === 'ar' ? 'متاح' : 'Available'} variant="success" size="sm" />
                           </td>
                           <td className="px-4 py-3">
-                            <button
+                                <button
                               onClick={() => removePreviewUnit(unit.id)}
                               className="text-red-400 hover:text-red-300 transition-colors duration-200 p-1 unded hover:bg-red-400/10"
                               title={language === 'ar' ? 'حذف الوحدة' : 'Remove Unit'}
                             >
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                                </button>
                           </td>
                         </tr>
                       ))}
@@ -1845,27 +1830,26 @@ export default function ProjectsPage() {
                     {language === 'ar' ? 'يجب اختيار مشروع قبل إنشاء الوحدات' : 'You must select a project before creating units'}
                   </p>
                 </div>
-              </div>
-              
+                          </div>
+                          
               <FormField label={language === 'ar' ? 'المشروع' : 'Project'} required>
-                <select
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  value={selectedProjectForBulk?.id || ''}
-                  onChange={(e) => {
-                    const proj = bulkProjects.find(p => p.id === parseInt(e.target.value));
+                <SelectContext
+                  options={[
+                    { value: 'unassigned', label: { ar: 'اختر مشروعاً', en: 'Select a project' } },
+                    ...bulkProjects.map((project) => ({
+                      value: project.id.toString(),
+                      label: { ar: project.name, en: project.name }
+                    }))
+                  ]}
+                  value={selectedProjectForBulk?.id?.toString() || ''}
+                  onChange={(value) => {
+                    const proj = bulkProjects.find(p => p.id === parseInt(value));
                     setSelectedProjectForBulk(proj || null);
                     setBulkProjectError('');
                   }}
-                >
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر مشروعاً' : 'Select a project'}
-                  </option>
-                  {bulkProjects.map((project) => (
-                    <option key={project.id} value={project.id} className="bg-obsidian">
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder={language === 'ar' ? 'اختر مشروعاً' : 'Select a project'}
+                  language={language}
+                />
               </FormField>
               
               {bulkProjectError && (
@@ -1877,16 +1861,16 @@ export default function ProjectsPage() {
             
             <div className="flex justify-end space-x-3 rtl:space-x-reverse">
               <motion.button
-                onClick={() => {
+                                  onClick={() => {
                   setShowProjectSelectionModal(false);
                   setSelectedProjectForBulk(null);
                   setBulkProjectError('');
-                }}
+                                  }}
                 className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-              >
-                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                                >
+                                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
               </motion.button>
               <motion.button
                 onClick={() => {
@@ -1904,8 +1888,8 @@ export default function ProjectsPage() {
               >
                 {language === 'ar' ? 'متابعة' : 'Continue'}
               </motion.button>
-            </div>
-          </div>
+                              </div>
+                            </div>
         </Modal>
 
         {/* Excel Upload Modal */}
@@ -1925,7 +1909,7 @@ export default function ProjectsPage() {
               <div className="flex items-center mb-4">
                 <div className="p-3 bg-blue-500/20 rounded-lg mr-4">
                   <Upload className="h-6 w-6 text-blue-500" />
-                </div>
+                        </div>
                 <div>
                   <h4 className="text-xl font-bold text-desert-gold">
                     {language === 'ar' ? 'تنسيق الملف المطلوب' : 'Required File Format'}
@@ -1933,7 +1917,7 @@ export default function ProjectsPage() {
                   <p className="text-stone-gray text-sm">
                     {language === 'ar' ? 'يجب أن يحتوي الملف على الأعمدة التالية:' : 'The file must contain the following columns:'}
                   </p>
-                </div>
+                      </div>
               </div>
               <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
                 <code className="text-elegant-white text-sm font-mono">
@@ -1945,14 +1929,14 @@ export default function ProjectsPage() {
                   {language === 'ar' ? 'ملاحظة: تأكد من أن الملف بصيغة CSV أو Excel وأن الأعمدة بالترتيب الصحيح' : 'Note: Ensure the file is in CSV or Excel format with columns in the correct order'}
                 </p>
               </div>
-            </div>
-
+                  </div>
+                  
             {/* File Upload */}
             <div className="bg-obsidian/70 rounded-xl p-8 border border-desert-gold/20">
               <div className="flex items-center mb-6">
                 <div className="p-3 bg-desert-gold/20 rounded-lg mr-4">
                   <FileText className="h-6 w-6 text-desert-gold" />
-                </div>
+                            </div>
                 <div>
                   <h4 className="text-xl font-bold text-desert-gold">
                     {language === 'ar' ? 'رفع الملف' : 'Upload File'}
@@ -1961,21 +1945,41 @@ export default function ProjectsPage() {
                     {language === 'ar' ? 'اختر ملف Excel أو CSV يحتوي على بيانات الوحدات' : 'Select an Excel or CSV file containing unit data'}
                   </p>
                 </div>
-              </div>
-              
+                          </div>
+                          
               <FormField label={language === 'ar' ? 'اختر ملف Excel' : 'Select Excel File'}>
-                <div className="border-2 border-dashed border-desert-gold/30 rounded-xl p-8 text-center hover:border-desert-gold/50 transition-colors duration-300">
+                <div
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors duration-300 ${dragActiveExcel ? 'border-desert-gold bg-desert-gold/10' : 'border-desert-gold/30 hover:border-desert-gold/50'}`}
+                  onDragEnter={e => { e.preventDefault(); setDragActiveExcel(true); }}
+                  onDragOver={e => { e.preventDefault(); setDragActiveExcel(true); }}
+                  onDragLeave={e => { e.preventDefault(); setDragActiveExcel(false); }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setDragActiveExcel(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      setExcelFile(file);
+                      handleExcelUpload(file);
+                    }
+                  }}
+                  aria-label={language === 'ar' ? 'منطقة رفع ملف Excel' : 'Excel file drop area'}
+                  tabIndex={0}
+                >
                   <Upload className="h-12 w-12 text-desert-gold mx-auto mb-4" />
                   <p className="text-stone-gray mb-2 text-lg">
-                    {language === 'ar' ? 'اسحب وأفلت ملف Excel هنا : Drag and drop Excel file here' : 'Or click to select file from your device'}
+                    {language === 'ar'
+                      ? 'اسحب وأفلت ملف Excel هنا'
+                      : 'Drag and drop Excel file here'}
                   </p>
                   <p className="text-stone-gray text-sm mb-4">
-                    {language === 'ar' ? 'أو انقر لاختيار الملف من جهازك' : 'Or click to select file from your device'}
+                    {language === 'ar'
+                      ? 'أو انقر لاختيار الملف من جهازك'
+                      : 'Or click to select file from your device'}
                   </p>
                   <input
                     type="file"
                     accept=".csv,.xlsx,.xls"
-                    onChange={(e) => {
+                    onChange={e => {
                       const file = e.target.files?.[0];
                       if (file) {
                         setExcelFile(file);
@@ -1985,12 +1989,13 @@ export default function ProjectsPage() {
                     className="hidden"
                     id="excel-upload"
                   />
-                  <label htmlFor="excel-upload" className="cursor-pointer">
-                    <button className="bg-desert-gold text-deep-black px-6 py-3 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse mx-auto">
-                      <Upload className="h-4 w-4" />
-                      <span>{language === 'ar' ? 'اختر الملف' : 'Choose File'}</span>
-                    </button>
+                  <label htmlFor="excel-upload" className="cursor-pointer bg-desert-gold text-deep-black px-6 py-3 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center justify-center gap-2 mx-auto">
+                    <Upload className="h-4 w-4" />
+                    <span>{language === 'ar' ? 'اختر الملف' : 'Choose File'}</span>
                   </label>
+                  {excelFile && (
+                    <div className="mt-4 text-green-400 font-medium text-sm">{excelFile.name}</div>
+                  )}
                 </div>
               </FormField>
               
@@ -2087,15 +2092,15 @@ export default function ProjectsPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                          </div>
                 {excelPreviewData.length > 10 && (
                   <div className="p-4 border-t border-desert-gold/20 text-center">
                     <p className="text-stone-gray text-sm">
                       {language === 'ar' ? `و ${excelPreviewData.length - 10} وحدة إضافية...` : `And ${excelPreviewData.length - 10} more units...`}
                     </p>
-                  </div>
+                        </div>
                 )}
-              </div>
+                    </div>
             )}
 
             {/* Action Buttons */}
@@ -2110,32 +2115,32 @@ export default function ProjectsPage() {
                     'لميتم اختيار ملف بعد' : 
                     'No file selected yet'
                 )}
-              </div>
-              
+            </div>
+
               <div className="flex space-x-3 rtl:space-x-reverse">
-                <motion.button
-                  onClick={() => {
+              <motion.button
+                onClick={() => {
                     setShowExcelUpload(false);
                     setExcelPreviewData([]);
                     setExcelFile(null);
-                  }}
+                }}
                   className="px-6 py-3 border border-desert-gold/20 stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                </motion.button>
-                <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </motion.button>
+              <motion.button
                   onClick={confirmExcelImport}
                   disabled={excelPreviewData.length === 0}
                   className="px-8 y-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 disabled:opacity-50 isabled:cursor-not-allowed flex items-center space-x-2 rtl:space-x-reverse"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                   <Upload className="h-4 w-4" />
                   <span>{language === 'ar' ? 'تأكيد الاستيراد' : 'Confirm Import'}</span>
-                </motion.button>
-              </div>
+              </motion.button>
+            </div>
             </div>
           </div>
         </Modal>

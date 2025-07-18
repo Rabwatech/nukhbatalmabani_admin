@@ -9,6 +9,7 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
 
 export default function TeamPage() {
   const { language } = useDirection();
@@ -522,46 +523,34 @@ export default function TeamPage() {
               </FormField>
 
               <FormField label={language === 'ar' ? 'الدور' : 'Role'} required>
-                <select
-                  defaultValue={selectedMember?.role || 'viewer'}
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                >
-                  <option value="admin" className="bg-obsidian">
-                    {language === 'ar' ? 'مدير' : 'Admin'}
-                  </option>
-                  <option value="sales" className="bg-obsidian">
-                    {language === 'ar' ? 'مبيعات' : 'Sales'}
-                  </option>
-                  <option value="support" className="bg-obsidian">
-                    {language === 'ar' ? 'دعم فني' : 'Support'}
-                  </option>
-                  <option value="viewer" className="bg-obsidian">
-                    {language === 'ar' ? 'مشاهد' : 'Viewer'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'admin', label: { ar: 'مدير', en: 'Admin' } },
+                    { value: 'sales', label: { ar: 'مبيعات', en: 'Sales' } },
+                    { value: 'support', label: { ar: 'دعم فني', en: 'Support' } },
+                    { value: 'viewer', label: { ar: 'مشاهد', en: 'Viewer' } }
+                  ]}
+                  value={selectedMember?.role || 'viewer'}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الدور' : 'Select Role'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'القسم' : 'Department'} required>
-                <select
-                  defaultValue=""
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                >
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر القسم' : 'Select Department'}
-                  </option>
-                  <option value="management" className="bg-obsidian">
-                    {language === 'ar' ? 'الإدارة' : 'Management'}
-                  </option>
-                  <option value="sales" className="bg-obsidian">
-                    {language === 'ar' ? 'المبيعات' : 'Sales'}
-                  </option>
-                  <option value="support" className="bg-obsidian">
-                    {language === 'ar' ? 'الدعم الفني' : 'Technical Support'}
-                  </option>
-                  <option value="accounting" className="bg-obsidian">
-                    {language === 'ar' ? 'المحاسبة' : 'Accounting'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'unassigned', label: { ar: 'اختر القسم', en: 'Select Department' } },
+                    { value: 'management', label: { ar: 'الإدارة', en: 'Management' } },
+                    { value: 'sales', label: { ar: 'المبيعات', en: 'Sales' } },
+                    { value: 'support', label: { ar: 'الدعم الفني', en: 'Technical Support' } },
+                    { value: 'accounting', label: { ar: 'المحاسبة', en: 'Accounting' } }
+                  ]}
+                  value=""
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر القسم' : 'Select Department'}
+                  language={language}
+                />
               </FormField>
 
               {!selectedMember && (
@@ -575,17 +564,16 @@ export default function TeamPage() {
               )}
 
               <FormField label={language === 'ar' ? 'الحالة' : 'Status'} required>
-                <select
-                  defaultValue={selectedMember?.status || 'active'}
-                  className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                >
-                  <option value="active" className="bg-obsidian">
-                    {language === 'ar' ? 'نشط' : 'Active'}
-                  </option>
-                  <option value="inactive" className="bg-obsidian">
-                    {language === 'ar' ? 'غير نشط' : 'Inactive'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'active', label: { ar: 'نشط', en: 'Active' } },
+                    { value: 'inactive', label: { ar: 'غير نشط', en: 'Inactive' } }
+                  ]}
+                  value={selectedMember?.status || 'active'}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الحالة' : 'Select Status'}
+                  language={language}
+                />
               </FormField>
             </div>
 

@@ -10,6 +10,11 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
+import { Calendar as ShadcnCalendar, CalendarProps } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { arSA, enUS } from 'date-fns/locale';
 
 export default function ContractsPage() {
   const { language } = useDirection();
@@ -20,6 +25,10 @@ export default function ContractsPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedContract, setSelectedContract] = useState<any>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [openStart, setOpenStart] = useState(false);
+  const [openEnd, setOpenEnd] = useState(false);
 
   // Handle URL query parameters for tab navigation
   useEffect(() => {
@@ -231,7 +240,7 @@ export default function ContractsPage() {
               <span>{language === 'ar' ? 'رفع عقد' : 'Upload Contract'}</span>
             </motion.button>
             <motion.button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => setActiveTab('create')}
               className="bg-desert-gold text-deep-black px-6 py-3 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -284,17 +293,17 @@ export default function ContractsPage() {
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField label={language === 'ar' ? 'الحجز المرتبط' : 'Related Booking'} required>
-                    <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                      <option value="" className="bg-obsidian">
-                        {language === 'ar' ? 'اختر الحجز' : 'Select Booking'}
-                      </option>
-                      <option value="1" className="bg-obsidian">
-                        {language === 'ar' ? 'أحمد العتيبي - A101' : 'Ahmed Al-Otaibi - A101'}
-                      </option>
-                      <option value="2" className="bg-obsidian">
-                        {language === 'ar' ? 'فاطمة الحربي - B205' : 'Fatima Al-Harbi - B205'}
-                      </option>
-                    </select>
+                    <SelectContext
+                      options={[
+                        { value: 'unassigned', label: { ar: 'اختر الحجز', en: 'Select Booking' } },
+                        { value: '1', label: { ar: 'أحمد العتيبي - A101', en: 'Ahmed Al-Otaibi - A101' } },
+                        { value: '2', label: { ar: 'فاطمة الحربي - B205', en: 'Fatima Al-Harbi - B205' } }
+                      ]}
+                      value=""
+                      onChange={() => {}}
+                      placeholder={language === 'ar' ? 'اختر الحجز' : 'Select Booking'}
+                      language={language}
+                    />
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'رقم العقد القانوني' : 'Legal Contract Number'} required>
@@ -306,31 +315,97 @@ export default function ContractsPage() {
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'تاريخ البداية' : 'Start Date'} required>
+                    <Popover open={openStart} onOpenChange={setOpenStart}>
+                      <PopoverTrigger asChild>
                     <input
-                      type="date"
-                      className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                          readOnly
+                          value={startDate ? format(startDate, 'yyyy/MM/dd') : ''}
+                          onClick={() => setOpenStart(true)}
+                          placeholder={language === 'ar' ? 'اختر التاريخ' : 'Select date'}
+                          className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 cursor-pointer"
                     />
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="p-0 z-[10000] bg-obsidian border border-desert-gold/20 rounded-xl shadow-2xl text-elegant-white" side={language === 'ar' ? 'left' : 'right'}>
+                        <ShadcnCalendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={date => { setStartDate(date); setOpenStart(false); }}
+                          locale={language === 'ar' ? arSA : enUS}
+                          weekStartsOn={language === 'ar' ? 0 : 1}
+                          classNames={{
+                            month: 'space-y-4',
+                            caption: 'flex justify-center pt-1 relative items-center text-elegant-white',
+                            table: 'w-full border-collapse space-y-1',
+                            head_row: 'flex',
+                            head_cell: 'text-stone-gray rounded-md w-9 font-normal text-[0.8rem]',
+                            row: 'flex w-full mt-2',
+                            cell: 'h-9 w-9 text-center text-sm p-0 relative',
+                            day: 'h-9 w-9 p-0 font-normal text-elegant-white bg-transparent hover:bg-desert-gold/10 hover:text-desert-gold rounded-md transition-colors duration-200',
+                            day_selected: 'bg-desert-gold text-deep-black hover:bg-desert-gold focus:bg-desert-gold rounded-md',
+                            day_today: 'border border-desert-gold text-desert-gold',
+                            day_outside: 'text-stone-gray opacity-50',
+                            day_disabled: 'text-stone-gray opacity-30',
+                            day_range_end: 'bg-desert-gold/80 text-deep-black',
+                            day_range_middle: 'bg-desert-gold/30 text-elegant-white',
+                            day_hidden: 'invisible',
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'تاريخ النهاية' : 'End Date'} required>
+                    <Popover open={openEnd} onOpenChange={setOpenEnd}>
+                      <PopoverTrigger asChild>
                     <input
-                      type="date"
-                      className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                          readOnly
+                          value={endDate ? format(endDate, 'yyyy/MM/dd') : ''}
+                          onClick={() => setOpenEnd(true)}
+                          placeholder={language === 'ar' ? 'اختر التاريخ' : 'Select date'}
+                          className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 cursor-pointer"
                     />
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="p-0 z-[10000] bg-obsidian border border-desert-gold/20 rounded-xl shadow-2xl text-elegant-white" side={language === 'ar' ? 'left' : 'right'}>
+                        <ShadcnCalendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={date => { setEndDate(date); setOpenEnd(false); }}
+                          locale={language === 'ar' ? arSA : enUS}
+                          weekStartsOn={language === 'ar' ? 0 : 1}
+                          classNames={{
+                            month: 'space-y-4',
+                            caption: 'flex justify-center pt-1 relative items-center text-elegant-white',
+                            table: 'w-full border-collapse space-y-1',
+                            head_row: 'flex',
+                            head_cell: 'text-stone-gray rounded-md w-9 font-normal text-[0.8rem]',
+                            row: 'flex w-full mt-2',
+                            cell: 'h-9 w-9 text-center text-sm p-0 relative',
+                            day: 'h-9 w-9 p-0 font-normal text-elegant-white bg-transparent hover:bg-desert-gold/10 hover:text-desert-gold rounded-md transition-colors duration-200',
+                            day_selected: 'bg-desert-gold text-deep-black hover:bg-desert-gold focus:bg-desert-gold rounded-md',
+                            day_today: 'border border-desert-gold text-desert-gold',
+                            day_outside: 'text-stone-gray opacity-50',
+                            day_disabled: 'text-stone-gray opacity-30',
+                            day_range_end: 'bg-desert-gold/80 text-deep-black',
+                            day_range_middle: 'bg-desert-gold/30 text-elegant-white',
+                            day_hidden: 'invisible',
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'حالة العقد' : 'Contract Status'} required>
-                    <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                      <option value="pending" className="bg-obsidian">
-                        {language === 'ar' ? 'معلق' : 'Pending'}
-                      </option>
-                      <option value="active" className="bg-obsidian">
-                        {language === 'ar' ? 'نشط' : 'Active'}
-                      </option>
-                      <option value="completed" className="bg-obsidian">
-                        {language === 'ar' ? 'مكتمل' : 'Completed'}
-                      </option>
-                    </select>
+                    <SelectContext
+                      options={[
+                        { value: 'pending', label: { ar: 'معلق', en: 'Pending' } },
+                        { value: 'active', label: { ar: 'نشط', en: 'Active' } },
+                        { value: 'completed', label: { ar: 'مكتمل', en: 'Completed' } }
+                      ]}
+                      value="pending"
+                      onChange={() => {}}
+                      placeholder={language === 'ar' ? 'اختر الحالة' : 'Select Status'}
+                      language={language}
+                    />
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'قيمة العقد' : 'Contract Value'} required>
@@ -386,16 +461,19 @@ export default function ContractsPage() {
 
               <form className="space-y-6 max-w-2xl mx-auto">
                 <FormField label={language === 'ar' ? 'العقد الحالي' : 'Current Contract'} required>
-                  <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                    <option value="" className="bg-obsidian">
-                      {language === 'ar' ? 'اختر العقد' : 'Select Contract'}
-                    </option>
-                    {contracts.filter(c => c.status === 'active').map((contract) => (
-                      <option key={contract.id} value={contract.id} className="bg-obsidian">
-                        {contract.contractNumber} - {contract.client} - {contract.unit}
-                      </option>
-                    ))}
-                  </select>
+                  <SelectContext
+                    options={[
+                      { value: 'unassigned', label: { ar: 'اختر العقد', en: 'Select Contract' } },
+                      ...contracts.filter(c => c.status === 'active').map((contract) => ({
+                        value: contract.id.toString(),
+                        label: { ar: `${contract.contractNumber} - ${contract.client} - ${contract.unit}`, en: `${contract.contractNumber} - ${contract.client} - ${contract.unit}` }
+                      }))
+                    ]}
+                    value=""
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر العقد' : 'Select Contract'}
+                    language={language}
+                  />
                 </FormField>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -409,35 +487,33 @@ export default function ContractsPage() {
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'المالك الجديد' : 'New Owner'} required>
-                    <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                      <option value="" className="bg-obsidian">
-                        {language === 'ar' ? 'اختر المالك الجديد' : 'Select New Owner'}
-                      </option>
-                      <option value="2" className="bg-obsidian">
-                        {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                      </option>
-                      <option value="3" className="bg-obsidian">
-                        {language === 'ar' ? 'خالد المطيري' : 'Khalid Al-Mutairi'}
-                      </option>
-                    </select>
+                    <SelectContext
+                      options={[
+                        { value: 'unassigned', label: { ar: 'اختر المالك الجديد', en: 'Select New Owner' } },
+                        { value: '2', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                        { value: '3', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                      ]}
+                      value=""
+                      onChange={() => {}}
+                      placeholder={language === 'ar' ? 'اختر المالك الجديد' : 'Select New Owner'}
+                      language={language}
+                    />
                   </FormField>
                 </div>
 
                 <FormField label={language === 'ar' ? 'سبب النقل' : 'Transfer Reason'} required>
-                  <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                    <option value="" className="bg-obsidian">
-                      {language === 'ar' ? 'اختر السبب' : 'Select Reason'}
-                    </option>
-                    <option value="sale" className="bg-obsidian">
-                      {language === 'ar' ? 'بيع' : 'Sale'}
-                    </option>
-                    <option value="inheritance" className="bg-obsidian">
-                      {language === 'ar' ? 'وراثة' : 'Inheritance'}
-                    </option>
-                    <option value="gift" className="bg-obsidian">
-                      {language === 'ar' ? 'هبة' : 'Gift'}
-                    </option>
-                  </select>
+                  <SelectContext
+                    options={[
+                      { value: 'unassigned', label: { ar: 'اختر السبب', en: 'Select Reason' } },
+                      { value: 'sale', label: { ar: 'بيع', en: 'Sale' } },
+                      { value: 'inheritance', label: { ar: 'وراثة', en: 'Inheritance' } },
+                      { value: 'gift', label: { ar: 'هبة', en: 'Gift' } }
+                    ]}
+                    value=""
+                    onChange={() => {}}
+                    placeholder={language === 'ar' ? 'اختر السبب' : 'Select Reason'}
+                    language={language}
+                  />
                 </FormField>
 
                 <FormField label={language === 'ar' ? 'ملاحظات النقل' : 'Transfer Notes'}>

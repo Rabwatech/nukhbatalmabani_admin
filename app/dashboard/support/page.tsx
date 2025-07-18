@@ -9,6 +9,7 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
 
 export default function SupportPage() {
   const { language } = useDirection();
@@ -539,78 +540,76 @@ export default function SupportPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'العميل' : 'Client'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر العميل' : 'Select Client'}
-                  </option>
-                  <option value="1" className="bg-obsidian">
-                    {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                  </option>
-                  <option value="2" className="bg-obsidian">
-                    {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'الكل', en: 'All' } },
+                    { value: '1', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                    { value: '2', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
-                  </option>
-                  <option value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'مجمع الأناقة' : 'Elegance Complex'}</option>
-                  <option value="b205" className="bg-obsidian">B205 - {language === 'ar' ? 'برج التجارة' : 'Trade Tower'}</option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'الكل', en: 'All' } },
+                    { value: 'a101', label: { ar: 'A101 - مجمع الأناقة', en: 'A101 - Elegance Complex' } },
+                    { value: 'b205', label: { ar: 'B205 - برج التجارة', en: 'B205 - Trade Tower' } },
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'نوع المشكلة' : 'Issue Type'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر نوع المشكلة' : 'Select Issue Type'}
-                  </option>
-                  <option value="plumbing" className="bg-obsidian">
-                    {language === 'ar' ? 'سباكة' : 'Plumbing'}
-                  </option>
-                  <option value="electrical" className="bg-obsidian">
-                    {language === 'ar' ? 'كهرباء' : 'Electrical'}
-                  </option>
-                  <option value="ac" className="bg-obsidian">
-                    {language === 'ar' ? 'تكييف' : 'AC'}
-                  </option>
-                  <option value="general" className="bg-obsidian">
-                    {language === 'ar' ? 'عام' : 'General'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'الكل', en: 'All' } },
+                    { value: 'plumbing', label: { ar: 'سباكة', en: 'Plumbing' } },
+                    { value: 'electrical', label: { ar: 'كهرباء', en: 'Electrical' } },
+                    { value: 'ac', label: { ar: 'تكييف', en: 'AC' } },
+                    { value: 'general', label: { ar: 'عام', en: 'General' } },
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر نوع المشكلة' : 'Select Issue Type'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'الأولوية' : 'Priority'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="low" className="bg-obsidian">
-                    {language === 'ar' ? 'منخفضة' : 'Low'}
-                  </option>
-                  <option value="medium" className="bg-obsidian">
-                    {language === 'ar' ? 'متوسطة' : 'Medium'}
-                  </option>
-                  <option value="high" className="bg-obsidian">
-                    {language === 'ar' ? 'عالية' : 'High'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'low', label: { ar: 'منخفضة', en: 'Low' } },
+                    { value: 'medium', label: { ar: 'متوسطة', en: 'Medium' } },
+                    { value: 'high', label: { ar: 'عالية', en: 'High' } },
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الأولوية' : 'Select Priority'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'المكلف بالمهمة' : 'Assign To'}>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الفني' : 'Select Technician'}
-                  </option>
-                  <option value="mohammed" className="bg-obsidian">
-                    {language === 'ar' ? 'محمد الفني' : 'Mohammed Tech'}
-                  </option>
-                  <option value="ali" className="bg-obsidian">
-                    {language === 'ar' ? 'علي الكهربائي' : 'Ali Electrician'}
-                  </option>
-                  <option value="saad" className="bg-obsidian">
-                    {language === 'ar' ? 'سعد التكييف' : 'Saad AC Tech'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'الكل', en: 'All' } },
+                    { value: 'mohammed', label: { ar: 'محمد الفني', en: 'Mohammed Tech' } },
+                    { value: 'ali', label: { ar: 'علي الكهربائي', en: 'Ali Electrician' } },
+                    { value: 'saad', label: { ar: 'سعد التكييف', en: 'Saad AC Tech' } },
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الفني' : 'Select Technician'}
+                  language={language}
+                />
               </FormField>
             </div>
 
@@ -690,33 +689,34 @@ export default function SupportPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'رقم التذكرة' : 'Ticket Number'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر التذكرة' : 'Select Ticket'}
-                  </option>
-                  {maintenanceRequests.map((request) => (
-                    <option key={request.id} value={request.ticketNumber} className="bg-obsidian">
-                      {request.ticketNumber} - {request.client}
-                    </option>
-                  ))}
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'الكل', en: 'All' } },
+                    ...maintenanceRequests.map((request) => ({
+                      value: request.ticketNumber,
+                      label: { ar: `${request.ticketNumber} - ${request.client}`, en: `${request.ticketNumber} - ${request.client}` }
+                    }))
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر التذكرة' : 'Select Ticket'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'الفني المنفذ' : 'Technician'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الفني' : 'Select Technician'}
-                  </option>
-                  <option value="mohammed" className="bg-obsidian">
-                    {language === 'ar' ? 'محمد الفني' : 'Mohammed Tech'}
-                  </option>
-                  <option value="ali" className="bg-obsidian">
-                    {language === 'ar' ? 'علي الكهربائي' : 'Ali Electrician'}
-                  </option>
-                  <option value="saad" className="bg-obsidian">
-                    {language === 'ar' ? 'سعد التكييف' : 'Saad AC Tech'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'all', label: { ar: 'الكل', en: 'All' } },
+                    { value: 'mohammed', label: { ar: 'محمد الفني', en: 'Mohammed Tech' } },
+                    { value: 'ali', label: { ar: 'علي الكهربائي', en: 'Ali Electrician' } },
+                    { value: 'saad', label: { ar: 'سعد التكييف', en: 'Saad AC Tech' } },
+                  ]}
+                  value={''}
+                  onChange={() => {}}
+                  placeholder={language === 'ar' ? 'اختر الفني' : 'Select Technician'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'تاريخ الخدمة' : 'Service Date'} required>

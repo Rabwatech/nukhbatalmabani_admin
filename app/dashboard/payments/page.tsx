@@ -9,6 +9,7 @@ import DataTable from '../components/shared/DataTable';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
 
 export default function PaymentsPage() {
   const { language } = useDirection();
@@ -17,6 +18,32 @@ export default function PaymentsPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  
+  // Form states
+  const [transferForm, setTransferForm] = useState({
+    client: '',
+    unit: '',
+    amount: '',
+    transferDate: ''
+  });
+  
+  const [invoiceForm, setInvoiceForm] = useState({
+    client: '',
+    type: '',
+    amount: '',
+    dueDate: '',
+    description: ''
+  });
+  
+  const [reminderForm, setReminderForm] = useState({
+    client: '',
+    sendMethods: {
+      whatsapp: false,
+      email: false,
+      sms: false
+    },
+    customMessage: ''
+  });
 
   // Mock data
   const paymentSchedule = [
@@ -276,6 +303,61 @@ export default function PaymentsPage() {
     }
   };
 
+  const resetTransferForm = () => {
+    setTransferForm({
+      client: '',
+      unit: '',
+      amount: '',
+      transferDate: ''
+    });
+  };
+
+  const resetInvoiceForm = () => {
+    setInvoiceForm({
+      client: '',
+      type: '',
+      amount: '',
+      dueDate: '',
+      description: ''
+    });
+  };
+
+  const resetReminderForm = () => {
+    setReminderForm({
+      client: '',
+      sendMethods: {
+        whatsapp: false,
+        email: false,
+        sms: false
+      },
+      customMessage: ''
+    });
+  };
+
+  const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Transfer form submitted:', transferForm);
+    // Here you would typically send the data to your API
+    setShowTransferModal(false);
+    resetTransferForm();
+  };
+
+  const handleInvoiceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Invoice form submitted:', invoiceForm);
+    // Here you would typically send the data to your API
+    setShowInvoiceModal(false);
+    resetInvoiceForm();
+  };
+
+  const handleReminderSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Reminder form submitted:', reminderForm);
+    // Here you would typically send the data to your API
+    setShowReminderModal(false);
+    resetReminderForm();
+  };
+
   return (
     <PageWrapper>
       <div className="space-y-6">
@@ -349,35 +431,41 @@ export default function PaymentsPage() {
                 {language === 'ar' ? 'تأكيد التحويل البنكي' : 'Confirm Bank Transfer'}
               </h2>
               
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleTransferSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField label={language === 'ar' ? 'العميل' : 'Client'} required>
-                    <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                      <option value="" className="bg-obsidian">
-                        {language === 'ar' ? 'اختر العميل' : 'Select Client'}
-                      </option>
-                      <option value="1" className="bg-obsidian">
-                        {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                      </option>
-                      <option value="2" className="bg-obsidian">
-                        {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                      </option>
-                    </select>
+                    <SelectContext
+                      options={[
+                        { value: '1', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                        { value: '2', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                        { value: '3', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                      ]}
+                      value={transferForm.client}
+                      onChange={(value) => setTransferForm(prev => ({ ...prev, client: value }))}
+                      placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'}
+                      language={language}
+                    />
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'} required>
-                    <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                      <option value="" className="bg-obsidian">
-                        {language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
-                      </option>
-                      <option value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'مجمع الأناقة' : 'Elegance Complex'}</option>
-                      <option value="b205" className="bg-obsidian">B205 - {language === 'ar' ? 'برج التجارة' : 'Trade Tower'}</option>
-                    </select>
+                    <SelectContext
+                      options={[
+                        { value: 'a101', label: { ar: 'A101 - مجمع الأناقة', en: 'A101 - Elegance Complex' } },
+                        { value: 'b205', label: { ar: 'B205 - برج التجارة', en: 'B205 - Trade Tower' } },
+                        { value: 'v15', label: { ar: 'V15 - قرية الهدوء', en: 'V15 - Tranquil Village' } }
+                      ]}
+                      value={transferForm.unit}
+                      onChange={(value) => setTransferForm(prev => ({ ...prev, unit: value }))}
+                      placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
+                      language={language}
+                    />
                   </FormField>
 
                   <FormField label={language === 'ar' ? 'المبلغ' : 'Amount'} required>
                     <input
                       type="number"
+                      value={transferForm.amount}
+                      onChange={(e) => setTransferForm(prev => ({ ...prev, amount: e.target.value }))}
                       className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
                       placeholder="250000"
                     />
@@ -386,6 +474,8 @@ export default function PaymentsPage() {
                   <FormField label={language === 'ar' ? 'تاريخ التحويل' : 'Transfer Date'} required>
                     <input
                       type="date"
+                      value={transferForm.transferDate}
+                      onChange={(e) => setTransferForm(prev => ({ ...prev, transferDate: e.target.value }))}
                       className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
                     />
                   </FormField>
@@ -606,7 +696,10 @@ export default function PaymentsPage() {
         {/* Confirm Transfer Modal */}
         <Modal
           isOpen={showTransferModal}
-          onClose={() => setShowTransferModal(false)}
+          onClose={() => {
+            setShowTransferModal(false);
+            resetTransferForm();
+          }}
           title={language === 'ar' ? 'تأكيد التحويل البنكي' : 'Confirm Bank Transfer'}
           size="lg"
         >
@@ -621,43 +714,48 @@ export default function PaymentsPage() {
         {/* New Invoice Modal */}
         <Modal
           isOpen={showInvoiceModal}
-          onClose={() => setShowInvoiceModal(false)}
+          onClose={() => {
+            setShowInvoiceModal(false);
+            resetInvoiceForm();
+          }}
           title={language === 'ar' ? 'إنشاء فاتورة جديدة' : 'Create New Invoice'}
           size="lg"
         >
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleInvoiceSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'العميل' : 'Client'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر العميل' : 'Select Client'}
-                  </option>
-                  <option value="1" className="bg-obsidian">
-                    {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                  </option>
-                  <option value="2" className="bg-obsidian">
-                    {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: '1', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                    { value: '2', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                    { value: '3', label: { ar: 'خالد المطيري', en: 'Khalid Al-Mutairi' } }
+                  ]}
+                  value={invoiceForm.client}
+                  onChange={(value) => setInvoiceForm(prev => ({ ...prev, client: value }))}
+                  placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'نوع الفاتورة' : 'Invoice Type'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="payment" className="bg-obsidian">
-                    {language === 'ar' ? 'دفعة' : 'Payment'}
-                  </option>
-                  <option value="installment" className="bg-obsidian">
-                    {language === 'ar' ? 'قسط' : 'Installment'}
-                  </option>
-                  <option value="maintenance" className="bg-obsidian">
-                    {language === 'ar' ? 'صيانة' : 'Maintenance'}
-                  </option>
-                </select>
+                <SelectContext
+                  options={[
+                    { value: 'payment', label: { ar: 'دفعة', en: 'Payment' } },
+                    { value: 'installment', label: { ar: 'قسط', en: 'Installment' } },
+                    { value: 'maintenance', label: { ar: 'صيانة', en: 'Maintenance' } }
+                  ]}
+                  value={invoiceForm.type}
+                  onChange={(value) => setInvoiceForm(prev => ({ ...prev, type: value }))}
+                  placeholder={language === 'ar' ? 'اختر نوع الفاتورة' : 'Select Invoice Type'}
+                  language={language}
+                />
               </FormField>
 
               <FormField label={language === 'ar' ? 'المبلغ' : 'Amount'} required>
                 <input
                   type="number"
+                  value={invoiceForm.amount}
+                  onChange={(e) => setInvoiceForm(prev => ({ ...prev, amount: e.target.value }))}
                   className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
                   placeholder="250000"
                 />
@@ -666,6 +764,8 @@ export default function PaymentsPage() {
               <FormField label={language === 'ar' ? 'تاريخ الاستحقاق' : 'Due Date'} required>
                 <input
                   type="date"
+                  value={invoiceForm.dueDate}
+                  onChange={(e) => setInvoiceForm(prev => ({ ...prev, dueDate: e.target.value }))}
                   className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
                 />
               </FormField>
@@ -674,6 +774,8 @@ export default function PaymentsPage() {
             <FormField label={language === 'ar' ? 'وصف الفاتورة' : 'Invoice Description'}>
               <textarea
                 rows={4}
+                value={invoiceForm.description}
+                onChange={(e) => setInvoiceForm(prev => ({ ...prev, description: e.target.value }))}
                 className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
                 placeholder={language === 'ar' ? 'أضف وصف للفاتورة...' : 'Add invoice description...'}
               />
@@ -682,7 +784,10 @@ export default function PaymentsPage() {
             <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-6">
               <motion.button
                 type="button"
-                onClick={() => setShowInvoiceModal(false)}
+                onClick={() => {
+                  setShowInvoiceModal(false);
+                  resetInvoiceForm();
+                }}
                 className="px-6 py-3 border border-desert-gold/20 text-stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -704,35 +809,62 @@ export default function PaymentsPage() {
         {/* Send Reminder Modal */}
         <Modal
           isOpen={showReminderModal}
-          onClose={() => setShowReminderModal(false)}
+          onClose={() => {
+            setShowReminderModal(false);
+            resetReminderForm();
+          }}
           title={language === 'ar' ? 'إرسال تذكير دفع' : 'Send Payment Reminder'}
         >
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleReminderSubmit}>
             <FormField label={language === 'ar' ? 'العميل' : 'Client'} required>
-              <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'اختر العميل' : 'Select Client'}
-                </option>
-                {upcomingPayments.map((payment) => (
-                  <option key={payment.id} value={payment.id} className="bg-obsidian">
-                    {payment.client} - {payment.unit}
-                  </option>
-                ))}
-              </select>
+              <SelectContext
+                options={upcomingPayments.map((payment) => ({
+                  value: payment.id.toString(),
+                  label: { ar: `${payment.client} - ${payment.unit}`, en: `${payment.client} - ${payment.unit}` }
+                }))}
+                value={reminderForm.client}
+                onChange={(value) => setReminderForm(prev => ({ ...prev, client: value }))}
+                placeholder={language === 'ar' ? 'اختر العميل' : 'Select Client'}
+                language={language}
+              />
             </FormField>
 
             <FormField label={language === 'ar' ? 'طريقة الإرسال' : 'Send Method'} required>
               <div className="space-y-3">
                 <label className="flex items-center">
-                  <input type="checkbox" className="mr-2 text-desert-gold" />
+                  <input 
+                    type="checkbox" 
+                    checked={reminderForm.sendMethods.whatsapp}
+                    onChange={(e) => setReminderForm(prev => ({ 
+                      ...prev, 
+                      sendMethods: { ...prev.sendMethods, whatsapp: e.target.checked } 
+                    }))}
+                    className="mr-2 text-desert-gold" 
+                  />
                   <span className="text-elegant-white">{language === 'ar' ? 'واتساب' : 'WhatsApp'}</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="mr-2 text-desert-gold" />
+                  <input 
+                    type="checkbox" 
+                    checked={reminderForm.sendMethods.email}
+                    onChange={(e) => setReminderForm(prev => ({ 
+                      ...prev, 
+                      sendMethods: { ...prev.sendMethods, email: e.target.checked } 
+                    }))}
+                    className="mr-2 text-desert-gold" 
+                  />
                   <span className="text-elegant-white">{language === 'ar' ? 'بريد إلكتروني' : 'Email'}</span>
                 </label>
                 <label className="flex items-center">
-                  <input type="checkbox" className="mr-2 text-desert-gold" />
+                  <input 
+                    type="checkbox" 
+                    checked={reminderForm.sendMethods.sms}
+                    onChange={(e) => setReminderForm(prev => ({ 
+                      ...prev, 
+                      sendMethods: { ...prev.sendMethods, sms: e.target.checked } 
+                    }))}
+                    className="mr-2 text-desert-gold" 
+                  />
                   <span className="text-elegant-white">{language === 'ar' ? 'رسالة نصية' : 'SMS'}</span>
                 </label>
               </div>
@@ -741,6 +873,8 @@ export default function PaymentsPage() {
             <FormField label={language === 'ar' ? 'رسالة مخصصة' : 'Custom Message'}>
               <textarea
                 rows={4}
+                value={reminderForm.customMessage}
+                onChange={(e) => setReminderForm(prev => ({ ...prev, customMessage: e.target.value }))}
                 className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
                 placeholder={language === 'ar' ? 'أضف رسالة مخصصة (اختياري)...' : 'Add custom message (optional)...'}
               />
@@ -749,7 +883,10 @@ export default function PaymentsPage() {
             <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-6">
               <motion.button
                 type="button"
-                onClick={() => setShowReminderModal(false)}
+                onClick={() => {
+                  setShowReminderModal(false);
+                  resetReminderForm();
+                }}
                 className="px-6 py-3 border border-desert-gold/20 text-stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

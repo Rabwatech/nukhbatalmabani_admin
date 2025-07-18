@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useDirection } from '@/context/DirectionContext';
 import { Search, Filter, MoreHorizontal, Edit, Eye, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import SelectContext from '@/components/ui/select-context';
 
 interface Column {
   key: string;
@@ -24,6 +25,7 @@ interface DataTableProps {
   filterOptions?: { value: string; label: string }[];
   loading?: boolean;
   onRowClick?: (row: any) => void;
+  exportButton?: React.ReactNode;
 }
 
 const DataTable = ({
@@ -37,7 +39,8 @@ const DataTable = ({
   onDelete,
   filterOptions,
   loading = false,
-  onRowClick
+  onRowClick,
+  exportButton
 }: DataTableProps) => {
   const { language, isRTL } = useDirection();
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +71,9 @@ const DataTable = ({
     <div className="bg-obsidian/50 backdrop-blur-sm rounded-xl border border-desert-gold/20 overflow-hidden">
       {/* Table Header with Search and Filters */}
       <div className="p-6 border-b border-desert-gold/20">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className={`flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center`}>
+          {/* Search & Export on opposite sides */}
+          <div className={`flex w-full flex-row ${isRTL ? 'flex-row-reverse' : ''} justify-between items-center gap-2`}>
           {/* Search */}
           <div className="relative flex-1 max-w-md">
             <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-stone-gray`} />
@@ -80,23 +85,27 @@ const DataTable = ({
               className={`w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300`}
             />
           </div>
-
+            {/* Export Button */}
+            {exportButton && (
+              <div className="shrink-0 flex items-center ml-2 rtl:mr-2 rtl:ml-0">{exportButton}</div>
+            )}
+          </div>
           {/* Filter */}
           {filterOptions && (
             <div className="relative">
-              <select
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع الحالات', en: 'All Status' } },
+                  ...filterOptions.map((option) => ({
+                    value: option.value,
+                    label: { ar: option.label, en: option.label }
+                  }))
+                ]}
                 value={selectedFilter}
-                onChange={(e) => handleFilter(e.target.value)}
-                className="bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300 appearance-none"
-              >
-                <option value="">{language === 'ar' ? 'جميع الحالات' : 'All Status'}</option>
-                {filterOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <Filter className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-stone-gray pointer-events-none`} />
+                onChange={handleFilter}
+                placeholder={language === 'ar' ? 'جميع الحالات' : 'All Status'}
+                language={language}
+              />
             </div>
           )}
         </div>

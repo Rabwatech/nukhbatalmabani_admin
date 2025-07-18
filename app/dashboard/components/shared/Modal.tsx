@@ -3,7 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDirection } from '@/context/DirectionContext';
 import { X } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -15,6 +16,11 @@ interface ModalProps {
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
   const { language } = useDirection();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const getSizeClasses = () => {
     switch (size) {
@@ -29,10 +35,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
     }
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -74,6 +80,11 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
       )}
     </AnimatePresence>
   );
+
+  if (typeof window === 'undefined' || !mounted) {
+    return modalContent;
+  }
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;

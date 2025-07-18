@@ -8,6 +8,7 @@ import PageWrapper from '../components/PageWrapper';
 import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
+import SelectContext from '@/components/ui/select-context';
 
 export default function ReportsPage() {
   const { language } = useDirection();
@@ -658,27 +659,19 @@ export default function ReportsPage() {
         >
           <form className="space-y-6">
             <FormField label={language === 'ar' ? 'الفترة الزمنية' : 'Time Period'} required>
-              <select
+              <SelectContext
+                options={[
+                  { value: 'this-month', label: { ar: 'هذا الشهر', en: 'This Month' } },
+                  { value: 'last-month', label: { ar: 'الشهر الماضي', en: 'Last Month' } },
+                  { value: 'this-quarter', label: { ar: 'هذا الربع', en: 'This Quarter' } },
+                  { value: 'this-year', label: { ar: 'هذا العام', en: 'This Year' } },
+                  { value: 'custom', label: { ar: 'فترة مخصصة', en: 'Custom Range' } },
+                ]}
                 value={selectedDateRange}
-                onChange={(e) => setSelectedDateRange(e.target.value)}
-                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-              >
-                <option value="this-month" className="bg-obsidian">
-                  {language === 'ar' ? 'هذا الشهر' : 'This Month'}
-                </option>
-                <option value="last-month" className="bg-obsidian">
-                  {language === 'ar' ? 'الشهر الماضي' : 'Last Month'}
-                </option>
-                <option value="this-quarter" className="bg-obsidian">
-                  {language === 'ar' ? 'هذا الربع' : 'This Quarter'}
-                </option>
-                <option value="this-year" className="bg-obsidian">
-                  {language === 'ar' ? 'هذا العام' : 'This Year'}
-                </option>
-                <option value="custom" className="bg-obsidian">
-                  {language === 'ar' ? 'فترة مخصصة' : 'Custom Range'}
-                </option>
-              </select>
+                onChange={setSelectedDateRange}
+                placeholder={language === 'ar' ? 'اختر الفترة' : 'Select Period'}
+                language={language}
+              />
             </FormField>
 
             {selectedDateRange === 'custom' && (
@@ -700,34 +693,32 @@ export default function ReportsPage() {
             )}
 
             <FormField label={language === 'ar' ? 'المشروع' : 'Project'}>
-              <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'جميع المشاريع' : 'All Projects'}
-                </option>
-                <option value="elegance" className="bg-obsidian">
-                  {language === 'ar' ? 'مجمع الأناقة' : 'Elegance Complex'}
-                </option>
-                <option value="trade" className="bg-obsidian">
-                  {language === 'ar' ? 'برج التجارة' : 'Trade Tower'}
-                </option>
-                <option value="tranquil" className="bg-obsidian">
-                  {language === 'ar' ? 'قرية الهدوء' : 'Tranquil Village'}
-                </option>
-              </select>
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع المشاريع', en: 'All Projects' } },
+                  { value: 'elegance', label: { ar: 'مجمع الأناقة', en: 'Elegance Complex' } },
+                  { value: 'trade', label: { ar: 'برج التجارة', en: 'Trade Tower' } },
+                  { value: 'tranquil', label: { ar: 'قرية الهدوء', en: 'Tranquil Village' } },
+                ]}
+                value={''}
+                onChange={() => {}}
+                placeholder={language === 'ar' ? 'اختر المشروع' : 'Select Project'}
+                language={language}
+              />
             </FormField>
 
             <FormField label={language === 'ar' ? 'مندوب المبيعات' : 'Sales Representative'}>
-              <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                <option value="" className="bg-obsidian">
-                  {language === 'ar' ? 'جميع المندوبين' : 'All Representatives'}
-                </option>
-                <option value="fatima" className="bg-obsidian">
-                  {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                </option>
-                <option value="ahmed" className="bg-obsidian">
-                  {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                </option>
-              </select>
+              <SelectContext
+                options={[
+                  { value: 'all', label: { ar: 'جميع المندوبين', en: 'All Representatives' } },
+                  { value: 'fatima', label: { ar: 'فاطمة الحربي', en: 'Fatima Al-Harbi' } },
+                  { value: 'ahmed', label: { ar: 'أحمد العتيبي', en: 'Ahmed Al-Otaibi' } },
+                ]}
+                value={''}
+                onChange={() => {}}
+                placeholder={language === 'ar' ? 'اختر المندوب' : 'Select Representative'}
+                language={language}
+              />
             </FormField>
 
             <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-6">

@@ -9,6 +9,13 @@ import StatusBadge from '../components/shared/StatusBadge';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
 import DataTable from '../components/shared/DataTable';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from '@/components/ui/select';
 
 export default function SalesPage() {
   const { language } = useDirection();
@@ -768,55 +775,59 @@ export default function SalesPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'العميل' : 'Customer'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر العميل' : 'Select Customer'}
-                  </option>
-                  <option value="1" className="bg-obsidian">
-                    {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                  </option>
-                  <option value="2" className="bg-obsidian">
-                    {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                  </option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Customer'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="1" className="bg-obsidian">{language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}</SelectItem>
+                    <SelectItem value="2" className="bg-obsidian">{language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label={language === 'ar' ? 'المشروع' : 'Project'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر المشروع' : 'Select Project'}
-                  </option>
-                  <option value="elegance" className="bg-obsidian">
-                    {language === 'ar' ? 'مجمع الأناقة' : 'Elegance Complex'}
-                  </option>
-                  <option value="trade" className="bg-obsidian">
-                    {language === 'ar' ? 'برج التجارة' : 'Trade Tower'}
-                  </option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر المشروع' : 'Select Project'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="elegance" className="bg-obsidian">{language === 'ar' ? 'مجمع الأناقة' : 'Elegance Complex'}</SelectItem>
+                    <SelectItem value="trade" className="bg-obsidian">{language === 'ar' ? 'برج التجارة' : 'Trade Tower'}</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
-                  </option>
-                  <option value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'شقة 3 غرف' : '3BR Apartment'}</option>
-                  <option value="b205" className="bg-obsidian">B205 - {language === 'ar' ? 'مكتب تجاري' : 'Commercial Office'}</option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'شقة 3 غرف' : '3BR Apartment'}</SelectItem>
+                    <SelectItem value="b205" className="bg-obsidian">B205 - {language === 'ar' ? 'مكتب تجاري' : 'Commercial Office'}</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label={language === 'ar' ? 'خطة الدفع' : 'Payment Plan'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر خطة الدفع' : 'Select Payment Plan'}
-                  </option>
-                  <option value="cash" className="bg-obsidian">
-                    {language === 'ar' ? 'دفع كامل' : 'Full Payment'}
-                  </option>
-                  <option value="installments" className="bg-obsidian">
-                    {language === 'ar' ? 'أقساط' : 'Installments'}
-                  </option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر خطة الدفع' : 'Select Payment Plan'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="cash" className="bg-obsidian">
+                      {language === 'ar' ? 'دفع كامل' : 'Full Payment'}
+                    </SelectItem>
+                    <SelectItem value="installments" className="bg-obsidian">
+                      {language === 'ar' ? 'أقساط' : 'Installments'}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
             </div>
 
@@ -860,27 +871,33 @@ export default function SalesPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'العميل' : 'Customer'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر العميل' : 'Select Customer'}
-                  </option>
-                  <option value="1" className="bg-obsidian">
-                    {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
-                  </option>
-                  <option value="2" className="bg-obsidian">
-                    {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
-                  </option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Customer'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="1" className="bg-obsidian">
+                      {language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}
+                    </SelectItem>
+                    <SelectItem value="2" className="bg-obsidian">
+                      {language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الوحدة' : 'Select Unit'}
-                  </option>
-                  <option value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'شقة 3 غرف' : '3BR Apartment'}</option>
-                  <option value="c302" className="bg-obsidian">C302 - {language === 'ar' ? 'شقة 2 غرف' : '2BR Apartment'}</option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'شقة 3 غرف' : '3BR Apartment'}</SelectItem>
+                    <SelectItem value="c302" className="bg-obsidian">C302 - {language === 'ar' ? 'شقة 2 غرف' : '2BR Apartment'}</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label={language === 'ar' ? 'السعر الأساسي' : 'Base Price'} required>
@@ -947,16 +964,19 @@ export default function SalesPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'الحجز المرتبط' : 'Related Booking'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="" className="bg-obsidian">
-                    {language === 'ar' ? 'اختر الحجز' : 'Select Booking'}
-                  </option>
-                  {bookings.map((booking) => (
-                    <option key={booking.id} value={booking.id} className="bg-obsidian">
-                      {booking.bookingNumber} - {booking.customer} - {booking.unit}
-                    </option>
-                  ))}
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الحجز' : 'Select Booking'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    {bookings.map((booking) => (
+                      <SelectItem key={String(booking.id)} value={String(booking.id)} className="bg-obsidian">
+                        {booking.bookingNumber} - {booking.customer} - {booking.unit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormField>
 
               <FormField label={language === 'ar' ? 'رقم العقد' : 'Contract Number'} required>
@@ -976,14 +996,20 @@ export default function SalesPage() {
               </FormField>
 
               <FormField label={language === 'ar' ? 'حالة العقد' : 'Contract Status'} required>
-                <select className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                  <option value="pending" className="bg-obsidian">
-                    {language === 'ar' ? 'معلق' : 'Pending'}
-                  </option>
-                  <option value="signed" className="bg-obsidian">
-                    {language === 'ar' ? 'موقع' : 'Signed'}
-                  </option>
-                </select>
+                <Select onValueChange={(value) => {}} defaultValue="all">
+                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر حالة العقد' : 'Select Contract Status'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
+                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="pending" className="bg-obsidian">
+                      {language === 'ar' ? 'معلق' : 'Pending'}
+                    </SelectItem>
+                    <SelectItem value="signed" className="bg-obsidian">
+                      {language === 'ar' ? 'موقع' : 'Signed'}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
             </div>
 
