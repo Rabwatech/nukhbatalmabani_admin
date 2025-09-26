@@ -21,6 +21,8 @@ const config: Config = {
         'concrete-gray': '#A3A29F',
         'obsidian': '#1D1D1B',
         'pure-white': '#FFFFFF',
+        'heritage-beige': '#C5B89F',
+        'elite-black': '#1C1C1C',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

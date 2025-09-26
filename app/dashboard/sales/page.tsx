@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import { useDirection } from '@/context/DirectionContext';
 import { useState } from 'react';
 import { Plus, Building2, MapPin, DollarSign, Calendar, FileText, Send, Clock, Eye, Edit, Trash2, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import PageWrapper from '../components/PageWrapper';
-import StatusBadge from '../components/shared/StatusBadge';
-import Modal from '../components/shared/Modal';
-import FormField from '../components/shared/FormField';
-import DataTable from '../components/shared/DataTable';
+import PageWrapper from '@/components/PageWrapper';
+import StatusBadge from '@/components/shared/StatusBadge';
+import Modal from '@/components/shared/Modal';
+import FormField from '@/components/shared/FormField';
+import DataTable from '@/components/shared/DataTable';
 import {
   Select,
   SelectTrigger,

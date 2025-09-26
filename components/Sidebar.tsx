@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { useDirection } from '@/context/DirectionContext';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { 
-  Home, 
-  Users, 
-  ShoppingCart, 
-  FileText, 
-  Building2, 
-  CreditCard, 
-  Headphones, 
-  UserCheck, 
-  BarChart3, 
+import { motion, AnimatePresence, Variants } from "framer-motion";
+import { useDirection } from "@/context/DirectionContext";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import {
+  Home,
+  Users,
+  ShoppingCart,
+  FileText,
+  Building2,
+  CreditCard,
+  Headphones,
+  UserCheck,
+  BarChart3,
   Bell,
   X,
   ChevronRight,
-  Wrench
-} from 'lucide-react';
+  Wrench,
+} from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,71 +31,71 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const menuItems = [
     {
-      id: 'dashboard',
+      id: "dashboard",
       icon: Home,
-      label: language === 'ar' ? 'لوحة التحكم' : 'Dashboard',
-      href: '/dashboard'
+      label: language === "ar" ? "لوحة التحكم" : "Dashboard",
+      href: "/dashboard",
     },
     {
-      id: 'customers',
+      id: "customers",
       icon: Users,
-      label: language === 'ar' ? 'إدارة العملاء' : 'Customer Management',
-      href: '/dashboard/customers'
+      label: language === "ar" ? "إدارة العملاء" : "Customer Management",
+      href: "/dashboard/customers",
     },
     {
-      id: 'sales',
+      id: "sales",
       icon: ShoppingCart,
-      label: language === 'ar' ? 'المبيعات والحجوزات' : 'Sales & Booking',
-      href: '/dashboard/sales'
+      label: language === "ar" ? "المبيعات والحجوزات" : "Sales & Booking",
+      href: "/dashboard/sales",
     },
+    // {
+    //   id: 'contracts',
+    //   icon: FileText,
+    //   label: language === 'ar' ? 'العقود والملكية' : 'Contracts & Ownership',
+    //   href: '/dashboard/contracts'
+    // },
     {
-      id: 'contracts',
-      icon: FileText,
-      label: language === 'ar' ? 'العقود والملكية' : 'Contracts & Ownership',
-      href: '/dashboard/contracts'
-    },
-    {
-      id: 'projects',
+      id: "projects",
       icon: Building2,
-      label: language === 'ar' ? 'المشاريع والوحدات' : 'Projects & Units',
-      href: '/dashboard/projects'
+      label: language === "ar" ? "المشاريع والوحدات" : "Projects & Units",
+      href: "/dashboard/projects",
     },
     {
-      id: 'payments',
+      id: "payments",
       icon: CreditCard,
-      label: language === 'ar' ? 'المدفوعات' : 'Payments',
-      href: '/dashboard/payments'
+      label: language === "ar" ? "المدفوعات" : "Payments",
+      href: "/dashboard/payments",
     },
     {
-      id: 'support',
+      id: "support",
       icon: Headphones,
-      label: language === 'ar' ? 'خدمة ما بعد البيع' : 'After-Sales Support',
-      href: '/dashboard/support'
+      label: language === "ar" ? "خدمة ما بعد البيع" : "After-Sales Support",
+      href: "/dashboard/support",
     },
     {
-      id: 'maintenance-tasks',
+      id: "maintenance-tasks",
       icon: Wrench,
-      label: language === 'ar' ? 'المهام والصيانة' : 'Maintenance Tasks',
-      href: '/dashboard/maintenance-tasks'
+      label: language === "ar" ? "المهام والصيانة" : "Maintenance Tasks",
+      href: "/dashboard/maintenance-tasks",
     },
     {
-      id: 'team',
+      id: "team",
       icon: UserCheck,
-      label: language === 'ar' ? 'الفريق والأدوار' : 'Team & Roles',
-      href: '/dashboard/team'
+      label: language === "ar" ? "الفريق والأدوار" : "Team & Roles",
+      href: "/dashboard/team",
     },
     {
-      id: 'reports',
+      id: "reports",
       icon: BarChart3,
-      label: language === 'ar' ? 'التقارير والتحليلات' : 'Reports & Analytics',
-      href: '/dashboard/reports'
+      label: language === "ar" ? "التقارير والتحليلات" : "Reports & Analytics",
+      href: "/dashboard/reports",
     },
     {
-      id: 'notifications',
+      id: "notifications",
       icon: Bell,
-      label: language === 'ar' ? 'الإشعارات' : 'Notifications',
-      href: '/dashboard/notifications'
-    }
+      label: language === "ar" ? "الإشعارات" : "Notifications",
+      href: "/dashboard/notifications",
+    },
   ];
 
   const sidebarVariants: Variants = {
@@ -104,22 +104,22 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 30
-      }
+        damping: 30,
+      },
     },
     closed: {
-      x: isRTL ? '100%' : '-100%',
+      x: isRTL ? "100%" : "-100%",
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 30
-      }
-    }
+        damping: 30,
+      },
+    },
   };
 
   const overlayVariants: Variants = {
     open: { opacity: 1 },
-    closed: { opacity: 0 }
+    closed: { opacity: 0 },
   };
 
   return (
@@ -139,7 +139,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col ${isRTL ? 'lg:right-0' : 'lg:left-0'}`}>
+      <div
+        className={`hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col ${
+          isRTL ? "lg:right-0" : "lg:left-0"
+        }`}
+      >
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-obsidian/90 backdrop-blur-xl border-r border-desert-gold/20 px-6 pb-4">
           {/* Logo */}
           <div className="flex h-16 shrink-0 items-center">
@@ -150,7 +154,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             >
               <Building2 className="h-8 w-8 text-desert-gold" />
               <span className="text-xl font-bold text-elegant-white">
-                {language === 'ar' ? 'نخبة المباني' : 'Nokhbat Almabani'}
+                {language === "ar" ? "نخبة المباني" : "Nokhbat Almabani"}
               </span>
             </motion.div>
           </div>
@@ -173,22 +177,30 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                           href={item.href}
                           className={`group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-medium transition-all duration-200 ${
                             isActive
-                              ? 'bg-desert-gold text-deep-black shadow-lg'
-                              : 'text-stone-gray hover:text-elegant-white hover:bg-stone-gray/10'
+                              ? "bg-desert-gold text-deep-black shadow-lg"
+                              : "text-stone-gray hover:text-elegant-white hover:bg-stone-gray/10"
                           }`}
                         >
                           <item.icon
                             className={`h-5 w-5 shrink-0 transition-colors duration-200 ${
-                              isActive ? 'text-deep-black' : 'text-stone-gray group-hover:text-elegant-white'
+                              isActive
+                                ? "text-deep-black"
+                                : "text-stone-gray group-hover:text-elegant-white"
                             }`}
                           />
                           {item.label}
                           {isActive && (
                             <motion.div
                               layoutId="activeIndicator"
-                              className={`ml-auto ${isRTL ? 'mr-auto ml-0' : ''}`}
+                              className={`ml-auto ${
+                                isRTL ? "mr-auto ml-0" : ""
+                              }`}
                             >
-                              <ChevronRight className={`h-4 w-4 text-deep-black ${isRTL ? 'rotate-180' : ''}`} />
+                              <ChevronRight
+                                className={`h-4 w-4 text-deep-black ${
+                                  isRTL ? "rotate-180" : ""
+                                }`}
+                              />
                             </motion.div>
                           )}
                         </Link>
@@ -210,7 +222,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             animate="open"
             exit="closed"
             variants={sidebarVariants}
-            className={`fixed inset-y-0 z-50 flex w-72 flex-col lg:hidden ${isRTL ? 'right-0' : 'left-0'}`}
+            className={`fixed inset-y-0 z-50 flex w-72 flex-col lg:hidden ${
+              isRTL ? "right-0" : "left-0"
+            }`}
           >
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-obsidian/95 backdrop-blur-xl border-r border-desert-gold/20 px-6 pb-4">
               {/* Mobile Header */}
@@ -221,7 +235,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 >
                   <Building2 className="h-8 w-8 text-desert-gold" />
                   <span className="text-xl font-bold text-elegant-white">
-                    {language === 'ar' ? 'نخبة المباني' : 'Nokhbat Almabani'}
+                    {language === "ar" ? "نخبة المباني" : "Nokhbat Almabani"}
                   </span>
                 </motion.div>
                 <motion.button
@@ -253,13 +267,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                               onClick={onClose}
                               className={`group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-medium transition-all duration-200 ${
                                 isActive
-                                  ? 'bg-desert-gold text-deep-black shadow-lg'
-                                  : 'text-stone-gray hover:text-elegant-white hover:bg-stone-gray/10'
+                                  ? "bg-desert-gold text-deep-black shadow-lg"
+                                  : "text-stone-gray hover:text-elegant-white hover:bg-stone-gray/10"
                               }`}
                             >
                               <item.icon
                                 className={`h-5 w-5 shrink-0 transition-colors duration-200 ${
-                                  isActive ? 'text-deep-black' : 'text-stone-gray group-hover:text-elegant-white'
+                                  isActive
+                                    ? "text-deep-black"
+                                    : "text-stone-gray group-hover:text-elegant-white"
                                 }`}
                               />
                               {item.label}

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { useDirection } from '@/context/DirectionContext';
-import { ReactNode } from 'react';
+import { motion } from "framer-motion";
+import { useDirection } from "@/context/DirectionContext";
+import { ReactNode } from "react";
 
 interface FormFieldProps {
   label: string;
@@ -12,7 +12,13 @@ interface FormFieldProps {
   className?: string;
 }
 
-const FormField = ({ label, children, error, required, className = '' }: FormFieldProps) => {
+const FormField = ({
+  label,
+  children,
+  error,
+  required,
+  className = "",
+}: FormFieldProps) => {
   const { isRTL } = useDirection();
 
   return (
@@ -21,9 +27,13 @@ const FormField = ({ label, children, error, required, className = '' }: FormFie
       animate={{ opacity: 1, y: 0 }}
       className={`space-y-2 ${className}`}
     >
-      <label className={`block text-sm font-medium text-elegant-white ${isRTL ? 'text-right' : 'text-left'}`}>
+      <label
+        className={`block text-sm font-medium text-elegant-white ${
+          isRTL ? "text-right" : "text-left"
+        }`}
+      >
         {label}
-        {required && <span className="text-red-400 ml-1">*</span>}
+        {required && <span className="text-desert-gold ml-1">*</span>}
       </label>
       {children}
       {error && (

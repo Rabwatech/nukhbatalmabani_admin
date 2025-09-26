@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { DirectionProvider } from '@/context/DirectionContext';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import { useState } from 'react';
-import { Wrench, Users } from 'lucide-react';
-import { useDirection } from '@/context/DirectionContext';
+import { DirectionProvider } from "@/context/DirectionContext";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import { useState } from "react";
+import { Wrench, Users } from "lucide-react";
+import { useDirection } from "@/context/DirectionContext";
 
 export default function DashboardLayout({
   children,
