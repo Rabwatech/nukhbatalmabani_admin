@@ -321,6 +321,7 @@ const StepFeatures: React.FC<StepProps> = ({
                           <WizardFormField
                             control={form.control}
                             name={`amenities.${index}.isAvailable`}
+                            label=""
                             render={({ field }) => (
                               <Switch
                                 checked={field.value}
@@ -620,6 +621,7 @@ const StepFeatures: React.FC<StepProps> = ({
                         <WizardFormField
                           control={form.control}
                           name={`services.${index}.isIncluded`}
+                          label=""
                           render={({ field }) => (
                             <Switch
                               checked={field.value}

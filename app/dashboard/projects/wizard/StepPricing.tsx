@@ -514,6 +514,7 @@ const StepPricing: React.FC<StepProps> = ({
                             <WizardFormField
                               control={form.control}
                               name={`paymentPlans.${index}.isActive`}
+                              label=""
                               render={({ field }) => (
                                 <Switch
                                   checked={field.value}

@@ -2,14 +2,22 @@
 
 import { motion } from "framer-motion";
 import { useDirection } from "@/context/DirectionContext";
-import { ReactNode } from "react";
-import { Controller, Control, FieldPath, FieldValues } from "react-hook-form";
+import { ReactElement, JSXElementConstructor } from "react";
+import { Controller, Control, FieldPath, FieldValues, ControllerRenderProps, ControllerFieldState, UseFormStateReturn } from "react-hook-form";
 
 interface WizardFormFieldProps<T extends FieldValues = FieldValues> {
   control: Control<T>;
   name: FieldPath<T>;
   label: string;
-  render: ({ field }: { field: any }) => ReactNode;
+  render: ({
+    field,
+    fieldState,
+    formState,
+  }: {
+    field: ControllerRenderProps<T, FieldPath<T>>;
+    fieldState: ControllerFieldState;
+    formState: UseFormStateReturn<T>;
+  }) => ReactElement<any, string | JSXElementConstructor<any>>;
   error?: string;
   required?: boolean;
   className?: string;
