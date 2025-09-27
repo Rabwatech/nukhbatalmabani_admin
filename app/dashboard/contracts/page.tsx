@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useDirection } from "@/context/DirectionContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Plus,
@@ -33,7 +33,7 @@ import {
 import { format } from "date-fns";
 import { arSA, enUS } from "date-fns/locale";
 
-export default function ContractsPage() {
+function ContractsContent() {
   const { language } = useDirection();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("list");
@@ -829,5 +829,19 @@ export default function ContractsPage() {
         </Modal>
       </div>
     </PageWrapper>
+  );
+}
+
+export default function ContractsPage() {
+  return (
+    <Suspense fallback={
+      <PageWrapper>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-elegant-white">Loading...</div>
+        </div>
+      </PageWrapper>
+    }>
+      <ContractsContent />
+    </Suspense>
   );
 }

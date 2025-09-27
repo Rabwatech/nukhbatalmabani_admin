@@ -19,7 +19,7 @@ const nextConfig = {
   
   // Experimental features for better performance
   experimental: {
-    optimizeCss: true,
+    // optimizeCss: true, // Disabled to prevent critters issues
   },
   
   // Environment variables
