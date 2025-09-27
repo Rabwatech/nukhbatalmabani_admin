@@ -66,12 +66,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       label: language === "ar" ? "المدفوعات" : "Payments",
       href: "/dashboard/payments",
     },
-    {
-      id: "support",
-      icon: Headphones,
-      label: language === "ar" ? "خدمة ما بعد البيع" : "After-Sales Support",
-      href: "/dashboard/support",
-    },
+    // {
+    //   id: "support",
+    //   icon: Headphones,
+    //   label: language === "ar" ? "خدمة ما بعد البيع" : "After-Sales Support",
+    //   href: "/dashboard/support",
+    // },
     {
       id: "maintenance-tasks",
       icon: Wrench,

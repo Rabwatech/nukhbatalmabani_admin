@@ -993,6 +993,53 @@ export default function CustomersPage() {
                     language={language}
                   />
                 </FormField>
+
+                {/* Method of Access */}
+                <FormField
+                  label={
+                    language === "ar" ? "طريقة الوصول" : "Method of Access"
+                  }
+                  required
+                >
+                  <SelectContext
+                    options={[
+                      {
+                        value: "social_media",
+                        label: {
+                          ar: "وسائل التواصل الاجتماعي",
+                          en: "Social Media",
+                        },
+                      },
+                      {
+                        value: "website",
+                        label: { ar: "الموقع الإلكتروني", en: "Website" },
+                      },
+                      {
+                        value: "advertising_campaign",
+                        label: {
+                          ar: "حملة إعلانية",
+                          en: "Advertising Campaign",
+                        },
+                      },
+                      {
+                        value: "field_marketing",
+                        label: { ar: "تسويق ميداني", en: "Field Marketing" },
+                      },
+                      {
+                        value: "awareness",
+                        label: { ar: "توعية", en: "Awareness" },
+                      },
+                    ]}
+                    value={selectedCustomer?.methodOfAccess || ""}
+                    onChange={() => {}}
+                    placeholder={
+                      language === "ar"
+                        ? "اختر طريقة الوصول"
+                        : "Select Method of Access"
+                    }
+                    language={language}
+                  />
+                </FormField>
               </div>
             </div>
 
@@ -1049,7 +1096,7 @@ export default function CustomersPage() {
               </div>
             </div>
 
-            {/* Project Purchase Interest Section */}
+            {/* Purchase Interest Section */}
             <div className="bg-stone-gray/10 rounded-lg p-6 border border-desert-gold/20">
               <div
                 className="flex justify-between items-center cursor-pointer"
@@ -1072,6 +1119,40 @@ export default function CustomersPage() {
 
               {isProjectInterestOpen && (
                 <div className="mt-4 space-y-6">
+                  {/* Purchase Interest Type */}
+                  <FormField
+                    label={language === "ar" ? "نوع الاهتمام" : "Interest Type"}
+                    required
+                  >
+                    <SelectContext
+                      options={[
+                        {
+                          value: "investment",
+                          label: { ar: "استثمار", en: "Investment" },
+                        },
+                        {
+                          value: "residence",
+                          label: { ar: "سكن", en: "Residence" },
+                        },
+                        {
+                          value: "both",
+                          label: {
+                            ar: "استثمار وسكن",
+                            en: "Investment & Residence",
+                          },
+                        },
+                      ]}
+                      value={selectedCustomer?.interestType || ""}
+                      onChange={() => {}}
+                      placeholder={
+                        language === "ar"
+                          ? "اختر نوع الاهتمام"
+                          : "Select Interest Type"
+                      }
+                      language={language}
+                    />
+                  </FormField>
+
                   {/* Project Selection */}
                   <FormField label={language === "ar" ? "المشروع" : "Project"}>
                     <SelectContext
@@ -1090,8 +1171,58 @@ export default function CustomersPage() {
 
                   {selectedProject && (
                     <>
-                      {/* Unit Selection */}
-                      <FormField label={language === "ar" ? "الوحدة" : "Unit"}>
+                      {/* Project Name */}
+                      <FormField
+                        label={
+                          language === "ar" ? "اسم المشروع" : "Project Name"
+                        }
+                      >
+                        <input
+                          type="text"
+                          value={
+                            selectedProject
+                              ? projects.find(
+                                  (p) => p.id.toString() === selectedProject
+                                )?.name || ""
+                              : ""
+                          }
+                          readOnly
+                          className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-stone-gray focus:outline-none transition-colors duration-300 cursor-not-allowed"
+                        />
+                      </FormField>
+
+                      {/* Building Selection */}
+                      <FormField
+                        label={language === "ar" ? "المبنى" : "Building"}
+                      >
+                        <SelectContext
+                          options={[
+                            {
+                              value: "building-a",
+                              label: { ar: "المبنى أ", en: "Building A" },
+                            },
+                            {
+                              value: "building-b",
+                              label: { ar: "المبنى ب", en: "Building B" },
+                            },
+                            {
+                              value: "building-c",
+                              label: { ar: "المبنى ج", en: "Building C" },
+                            },
+                          ]}
+                          value={""}
+                          onChange={() => {}}
+                          placeholder={
+                            language === "ar"
+                              ? "اختر المبنى"
+                              : "Select Building"
+                          }
+                          language={language}
+                        />
+                      </FormField>
+
+                      {/* Flat Selection */}
+                      <FormField label={language === "ar" ? "الشقة" : "Flat"}>
                         <SelectContext
                           options={
                             projects
@@ -1107,29 +1238,53 @@ export default function CustomersPage() {
                           value={""}
                           onChange={() => {}}
                           placeholder={
-                            language === "ar" ? "اختر الوحدة" : "Select Unit"
+                            language === "ar" ? "اختر الشقة" : "Select Flat"
                           }
                           language={language}
                         />
                       </FormField>
 
-                      {/* Property Type */}
+                      {/* Number of Rooms */}
                       <FormField
                         label={
-                          language === "ar" ? "نوع العقار" : "Property Type"
+                          language === "ar" ? "عدد الغرف" : "Number of Rooms"
                         }
                       >
-                        <input
-                          type="text"
-                          value={
-                            selectedProject
-                              ? projects.find(
-                                  (p) => p.id.toString() === selectedProject
-                                )?.units[0].type || ""
-                              : ""
+                        <SelectContext
+                          options={[
+                            {
+                              value: "1",
+                              label: { ar: "1 غرفة", en: "1 Room" },
+                            },
+                            {
+                              value: "2",
+                              label: { ar: "2 غرف", en: "2 Rooms" },
+                            },
+                            {
+                              value: "3",
+                              label: { ar: "3 غرف", en: "3 Rooms" },
+                            },
+                            {
+                              value: "4",
+                              label: { ar: "4 غرف", en: "4 Rooms" },
+                            },
+                            {
+                              value: "5",
+                              label: { ar: "5 غرف", en: "5 Rooms" },
+                            },
+                            {
+                              value: "6+",
+                              label: { ar: "6+ غرف", en: "6+ Rooms" },
+                            },
+                          ]}
+                          value={""}
+                          onChange={() => {}}
+                          placeholder={
+                            language === "ar"
+                              ? "اختر عدد الغرف"
+                              : "Select Number of Rooms"
                           }
-                          readOnly
-                          className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-stone-gray focus:outline-none transition-colors duration-300 cursor-not-allowed"
+                          language={language}
                         />
                       </FormField>
 

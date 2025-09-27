@@ -28,6 +28,8 @@ import {
   Home,
   Shield,
   Video,
+  Star,
+  BarChart3,
   Wrench,
   Brush,
   Wind,
@@ -66,21 +68,9 @@ export default function ProjectsPage() {
   const { language } = useDirection();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("list");
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [projectImages, setProjectImages] = useState<File[]>([]);
-  const [projectLicense, setProjectLicense] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [features, setFeatures] = useState<ProjectFeature[]>([]);
-  const [newFeature, setNewFeature] = useState("");
-  const [selectedPaymentPlan, setSelectedPaymentPlan] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [services, setServices] = useState<ProjectService[]>([]);
-  const [showServicesDropdown, setShowServicesDropdown] = useState(false);
-  const [customServiceName, setCustomServiceName] = useState("");
-  const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const licenseFileInputRef = useRef<HTMLInputElement>(null);
+  const [showProjectOverview, setShowProjectOverview] = useState(false);
+  const [selectedProjectOverview, setSelectedProjectOverview] =
+    useState<any>(null);
 
   // Bulk Unit Creation System States
   const [showBulkUnitModal, setShowBulkUnitModal] = useState(false);
@@ -447,113 +437,6 @@ export default function ProjectsPage() {
     { value: "mixed", label: language === "ar" ? "مختلط" : "Mixed Use" },
   ];
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleProjectImages(Array.from(e.dataTransfer.files));
-    }
-  };
-
-  const handleProjectImages = (files: File[]) => {
-    // Filter for image files only
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-    setProjectImages((prev) => [...prev, ...imageFiles]);
-  };
-
-  const handleLicenseFile = (files: FileList | null) => {
-    if (files && files.length > 0) {
-      // Only accept PDF files
-      if (files[0].type === "application/pdf") {
-        setProjectLicense(files[0]);
-      } else {
-        alert(
-          language === "ar"
-            ? "يرجى تحميل ملف PDF فقط"
-            : "Please upload PDF file only"
-        );
-      }
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setProjectImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removeLicense = () => {
-    setProjectLicense(null);
-  };
-
-  const handleAddFeature = () => {
-    if (newFeature.trim()) {
-      setFeatures((prev) => [
-        ...prev,
-        { id: Date.now().toString(), text: newFeature.trim() },
-      ]);
-      setNewFeature("");
-    }
-  };
-
-  const removeFeature = (id: string) => {
-    setFeatures((prev) => prev.filter((feature) => feature.id !== id));
-  };
-
-  const handlePaymentPlanChange = (plan: string) => {
-    setSelectedPaymentPlan(plan);
-    if (plan !== "bank-financing") {
-      setBankName("");
-    }
-  };
-
-  const addService = (service: ProjectService) => {
-    // Check if service already exists
-    if (!services.some((s) => s.id === service.id)) {
-      setServices((prev) => [
-        ...prev,
-        { ...service, quantity: service.id === "elevators" ? 1 : undefined },
-      ]);
-    }
-    setShowServicesDropdown(false);
-  };
-
-  const addCustomService = () => {
-    if (customServiceName.trim()) {
-      const newService: ProjectService = {
-        id: `custom-${Date.now()}`,
-        name: customServiceName,
-        icon: Building2,
-        isCustom: true,
-      };
-      setServices((prev) => [...prev, newService]);
-      setCustomServiceName("");
-      setShowCustomServiceInput(false);
-    }
-  };
-
-  const updateServiceQuantity = (id: string, quantity: number) => {
-    setServices((prev) =>
-      prev.map((service) =>
-        service.id === id ? { ...service, quantity } : service
-      )
-    );
-  };
-
-  const removeService = (id: string) => {
-    setServices((prev) => prev.filter((service) => service.id !== id));
-  };
-
   // Bulk Unit Creation Helper Functions
   const generateUnitCode = (
     projectCode: string,
@@ -565,7 +448,7 @@ export default function ProjectsPage() {
 
   const generatePreviewUnits = () => {
     const units = [];
-    const projectCode = selectedProject?.project_code || "PRJ-001";
+    const projectCode = selectedProjectForBulk?.project_code || "PRJ-001";
 
     for (let i = 1; i <= bulkUnitForm.numberOfCopies; i++) {
       const floorNumber =
@@ -759,31 +642,13 @@ export default function ProjectsPage() {
   };
 
   const handleView = (project: any) => {
-    setSelectedProject(project);
+    setSelectedProjectOverview(project);
+    setShowProjectOverview(true);
   };
 
   const handleEdit = (project: any) => {
-    setSelectedProject(project);
-
-    // Set features from project
-    if (project.features) {
-      setFeatures(
-        project.features.map((text: string) => ({
-          id: Date.now() + Math.random().toString(),
-          text,
-        }))
-      );
-    }
-
-    // Set payment plan
-    setSelectedPaymentPlan(project.paymentPlan || "");
-
-    // Set bank name if available
-    if (project.bankName) {
-      setBankName(project.bankName);
-    }
-
-    setShowCreateModal(true);
+    // Edit functionality removed - only wizard available
+    console.log("Edit project:", project);
   };
 
   const handleDelete = (project: any) => {
@@ -851,24 +716,7 @@ export default function ProjectsPage() {
               whileTap={{ scale: 0.95 }}
             >
               <Plus className="h-5 w-5" />
-              <span>
-                {language === "ar"
-                  ? "مشروع جديد (معالج)"
-                  : "New Project (Wizard)"}
-              </span>
-            </motion.button>
-            <motion.button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-desert-gold text-deep-black px-6 py-3 rounded-lg font-medium hover:bg-warm-sand transition-all duration-300 flex items-center space-x-2 rtl:space-x-reverse"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Plus className="h-5 w-5" />
-              <span>
-                {language === "ar"
-                  ? "مشروع جديد (نموذج)"
-                  : "New Project (Form)"}
-              </span>
+              <span>{language === "ar" ? "مشروع جديد" : "New Project"}</span>
             </motion.button>
           </div>
         </div>
@@ -1196,607 +1044,6 @@ export default function ProjectsPage() {
             </div>
           )}
         </div>
-
-        {/* Create Project Modal */}
-        <Modal
-          isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false);
-            setSelectedProject(null);
-            setProjectImages([]);
-            setProjectLicense(null);
-            setFeatures([]);
-            setSelectedPaymentPlan("");
-            setBankName("");
-            setServices([]);
-          }}
-          title={
-            selectedProject
-              ? language === "ar"
-                ? "تعديل المشروع"
-                : "Edit Project"
-              : language === "ar"
-              ? "مشروع جديد"
-              : "New Project"
-          }
-          size="xl"
-        >
-          <form className="space-y-8">
-            {/* 🧱 Basic Info Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <Building2 className="h-5 w-5 mr-2" />
-                {language === "ar" ? "🧱 المعلومات الأساسية" : "🧱 Basic Info"}
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  label={
-                    language === "ar"
-                      ? "اسم المشروع (بالعربية)"
-                      : "Project Name (Arabic)"
-                  }
-                  required
-                >
-                  <input
-                    type="text"
-                    name="project_name_ar"
-                    defaultValue={selectedProject?.name_ar || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "اسم المشروع (بالعربية)"
-                        : "Project Name (Arabic)"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={
-                    language === "ar"
-                      ? "اسم المشروع (بالإنجليزية)"
-                      : "Project Name (English)"
-                  }
-                  required
-                >
-                  <input
-                    type="text"
-                    name="project_name_en"
-                    defaultValue={selectedProject?.name_en || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "Project Name (English)"
-                        : "Project Name (English)"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "رمز المشروع" : "Project Code"}
-                >
-                  <input
-                    type="text"
-                    name="project_code"
-                    defaultValue={selectedProject?.project_code || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "رمز المشروع (مثل PRJ-001)"
-                        : "Project Code (e.g., PRJ-001)"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "المدينة" : "City"}
-                  required
-                >
-                  <SelectContext
-                    options={[
-                      {
-                        value: "riyadh",
-                        label: { ar: "الرياض", en: "Riyadh" },
-                      },
-                      { value: "jeddah", label: { ar: "جدة", en: "Jeddah" } },
-                      {
-                        value: "dammam",
-                        label: { ar: "الدمام", en: "Dammam" },
-                      },
-                      {
-                        value: "makkah",
-                        label: { ar: "مكة المكرمة", en: "Makkah" },
-                      },
-                    ]}
-                    value={""}
-                    onChange={() => {}}
-                    placeholder={
-                      language === "ar" ? "اختر المدينة" : "Select City"
-                    }
-                    language={language}
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "المنطقة / الحي" : "District"}
-                  required
-                >
-                  <input
-                    type="text"
-                    name="district"
-                    defaultValue={selectedProject?.district || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "المنطقة / الحي"
-                        : "District / Neighborhood"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "العنوان الكامل" : "Full Address"}
-                  className="md:col-span-2"
-                >
-                  <input
-                    type="text"
-                    name="address"
-                    defaultValue={selectedProject?.address || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "العنوان الكامل للموقع"
-                        : "Complete address of the location"
-                    }
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            {/* 📎 Ownership & Document Details Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
-                {language === "ar"
-                  ? "📎 الملكية وتفاصيل الوثائق"
-                  : "📎 Ownership & Document Details"}
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  label={language === "ar" ? "رقم المخطط" : "Plan Number"}
-                >
-                  <input
-                    type="text"
-                    name="plan_number"
-                    defaultValue={selectedProject?.plan_number || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "رقم المخطط" : "Plan Number"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "رقم القطعة" : "Piece Number"}
-                >
-                  <input
-                    type="text"
-                    name="piece_number"
-                    defaultValue={selectedProject?.piece_number || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "رقم القطعة" : "Piece Number"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "رقم الصك" : "Deed Number"}
-                >
-                  <input
-                    type="text"
-                    name="deed_number"
-                    defaultValue={selectedProject?.deed_number || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={language === "ar" ? "رقم الصك" : "Deed Number"}
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "مكان الإصدار" : "Issuing Place"}
-                >
-                  <input
-                    type="text"
-                    name="issuing_place"
-                    defaultValue={selectedProject?.issuing_place || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "مكان الإصدار" : "Issuing Place"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "تاريخ الإصدار" : "Issuing Date"}
-                >
-                  <input
-                    type="date"
-                    name="issuing_date"
-                    defaultValue={selectedProject?.issuing_date || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  />
-                </FormField>
-
-                <FormField label={language === "ar" ? "الجهة" : "Organization"}>
-                  <input
-                    type="text"
-                    name="organization"
-                    defaultValue={selectedProject?.organization || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={language === "ar" ? "الجهة" : "Organization"}
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            {/* 🧩 Additional Info Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                {language === "ar" ? "🧩 معلومات إضافية" : "🧩 Additional Info"}
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  label={
-                    language === "ar" ? "شركة الإنشاء" : "Contractor Company"
-                  }
-                >
-                  <input
-                    type="text"
-                    name="contractor_company"
-                    defaultValue={selectedProject?.contractor_company || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "اسم شركة الإنشاء (اختياري)"
-                        : "Contractor Company Name (Optional)"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "حالة المشروع" : "Project Status"}
-                  required
-                >
-                  <SelectContext
-                    options={[
-                      {
-                        value: "ready",
-                        label: { ar: "جاهز للبيع ✅", en: "Ready for Sale ✅" },
-                      },
-                      {
-                        value: "sold",
-                        label: {
-                          ar: "تم البيع بالكامل 🏁",
-                          en: "Fully Sold 🏁",
-                        },
-                      },
-                      {
-                        value: "under-construction",
-                        label: {
-                          ar: "قيد الإنشاء 🔨",
-                          en: "Under Construction 🔨",
-                        },
-                      },
-                      {
-                        value: "on-hold",
-                        label: { ar: "متوقف ⏸️", en: "On Hold ⏸️" },
-                      },
-                    ]}
-                    value={selectedProject?.status || "ready"}
-                    onChange={() => {}}
-                    placeholder={
-                      language === "ar"
-                        ? "اختر حالة المشروع"
-                        : "Select Project Status"
-                    }
-                    language={language}
-                  />
-                </FormField>
-
-                <FormField
-                  label={
-                    language === "ar" ? "مندوب المشروع" : "Sales Representative"
-                  }
-                  required
-                >
-                  <SelectContext
-                    options={[
-                      {
-                        value: "unassigned",
-                        label: {
-                          ar: "اختر مندوب المشروع",
-                          en: "Select Sales Representative",
-                        },
-                      },
-                      {
-                        value: "ahmed",
-                        label: { ar: "أحمد العتيبي", en: "Ahmed Al-Otaibi" },
-                      },
-                      {
-                        value: "fatima",
-                        label: { ar: "فاطمة الحربي", en: "Fatima Al-Harbi" },
-                      },
-                      {
-                        value: "khalid",
-                        label: { ar: "خالد المطيري", en: "Khalid Al-Mutairi" },
-                      },
-                    ]}
-                    value={selectedProject?.sales_rep || ""}
-                    onChange={() => {}}
-                    placeholder={
-                      language === "ar"
-                        ? "اختر مندوب المشروع"
-                        : "Select Sales Representative"
-                    }
-                    language={language}
-                  />
-                </FormField>
-
-                <FormField
-                  label={
-                    language === "ar" ? "وصف المشروع" : "Project Description"
-                  }
-                  className="md:col-span-2"
-                >
-                  <textarea
-                    name="project_description"
-                    rows={4}
-                    defaultValue={selectedProject?.description || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
-                    placeholder={
-                      language === "ar"
-                        ? "وصف موجز للمشروع"
-                        : "Brief project description"
-                    }
-                  />
-                </FormField>
-
-                <FormField
-                  label={
-                    language === "ar" ? "ملاحظات داخلية" : "Internal Notes"
-                  }
-                  className="md:col-span-2"
-                >
-                  <textarea
-                    name="internal_notes"
-                    rows={3}
-                    defaultValue={selectedProject?.internal_notes || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
-                    placeholder={
-                      language === "ar"
-                        ? "ملاحظات داخلية (للإدارة)"
-                        : "Internal notes (for management)"
-                    }
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            {/* 📷 Media Upload Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <Image className="h-5 w-5 mr-2" />
-                {language === "ar" ? "📷 رفع الوسائط" : "📷 Media Upload"}
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  label={language === "ar" ? "صور المشروع" : "Project Images"}
-                >
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
-                      dragActive
-                        ? "border-desert-gold bg-desert-gold/10"
-                        : "border-desert-gold/30 hover:border-desert-gold/50"
-                    }`}
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                  >
-                    <Upload className="h-8 w-8 text-desert-gold mx-auto mb-3" />
-                    <p className="text-stone-gray mb-2">
-                      {language === "ar"
-                        ? "اسحب وأفلت الصور هنا"
-                        : "Drag and drop images here"}
-                    </p>
-                    <input
-                      type="file"
-                      name="project_images"
-                      accept="image/*"
-                      multiple
-                      ref={fileInputRef}
-                      onChange={(e) =>
-                        handleProjectImages(
-                          e.target.files ? Array.from(e.target.files) : []
-                        )
-                      }
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-desert-gold/20 text-desert-gold px-4 py-2 rounded-lg hover:bg-desert-gold/30 transition-colors duration-200"
-                    >
-                      {language === "ar" ? "اختر الصور" : "Choose Images"}
-                    </button>
-                  </div>
-
-                  {projectImages.length > 0 && (
-                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {projectImages.map((image, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={URL.createObjectURL(image)}
-                            alt={`Project image ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-deep-black/70 text-red-400 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </FormField>
-
-                <div className="space-y-6">
-                  <FormField
-                    label={language === "ar" ? "صورة المخطط" : "Plan Image"}
-                  >
-                    <UploadLabel
-                      htmlFor="plan-image"
-                      label={
-                        language === "ar"
-                          ? "رفع صورة المخطط"
-                          : "Upload Plan Image"
-                      }
-                      withBorder
-                    />
-                  </FormField>
-
-                  <FormField
-                    label={language === "ar" ? "شعار المشروع" : "Project Logo"}
-                  >
-                    <div className="border-2 border-dashed border-desert-gold/30 rounded-lg p-4 text-center hover:border-desert-gold/50 transition-colors duration-300">
-                      <input
-                        type="file"
-                        name="logo_image"
-                        accept="image/*"
-                        className="hidden"
-                        id="logo-image"
-                      />
-                      <label htmlFor="logo-image" className="cursor-pointer">
-                        <Upload className="h-6 w-6 text-desert-gold mx-auto mb-2" />
-                        <p className="text-stone-gray text-sm">
-                          {language === "ar"
-                            ? "رفع شعار المشروع"
-                            : "Upload Project Logo"}
-                        </p>
-                      </label>
-                    </div>
-                  </FormField>
-                </div>
-              </div>
-            </div>
-
-            {/* 📊 Project Metrics Section */}
-            <div className="bg-obsidian/70 rounded-lg p-6 border border-desert-gold/20">
-              <h3 className="text-xl font-bold text-desert-gold mb-6 flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                {language === "ar" ? "📊 مقاييس المشروع" : "📊 Project Metrics"}
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  label={language === "ar" ? "عدد المباني" : "Building Count"}
-                >
-                  <input
-                    type="number"
-                    name="building_count"
-                    defaultValue={selectedProject?.building_count || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "عدد المباني" : "Number of Buildings"
-                    }
-                    min="0"
-                  />
-                </FormField>
-
-                <FormField
-                  label={
-                    language === "ar"
-                      ? "عدد الأدوار لكل مبنى"
-                      : "Floors Per Building"
-                  }
-                >
-                  <input
-                    type="number"
-                    name="floors_per_building"
-                    defaultValue={selectedProject?.floors_per_building || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "عدد الأدوار لكل مبنى"
-                        : "Number of Floors per Building"
-                    }
-                    min="0"
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "أقل سعر" : "Minimum Unit Price"}
-                >
-                  <input
-                    type="number"
-                    name="min_unit_price"
-                    defaultValue={selectedProject?.min_unit_price || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "أقل سعر" : "Minimum Price"
-                    }
-                    min="0"
-                  />
-                </FormField>
-
-                <FormField
-                  label={language === "ar" ? "سعر البيع" : "Average Unit Price"}
-                >
-                  <input
-                    type="number"
-                    name="avg_unit_price"
-                    defaultValue={selectedProject?.avg_unit_price || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "سعر البيع" : "Average Price"
-                    }
-                    min="0"
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-6">
-              <motion.button
-                type="button"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setSelectedProject(null);
-                }}
-                className="px-6 py-3 border border-desert-gold/20 text-stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {language === "ar" ? "إلغاء" : "Cancel"}
-              </motion.button>
-              <motion.button
-                type="submit"
-                className="px-6 py-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {language === "ar" ? "حفظ" : "Save"}
-              </motion.button>
-            </div>
-          </form>
-        </Modal>
 
         {/* Bulk Unit Creation Modal */}
         <Modal
@@ -2864,6 +2111,307 @@ export default function ProjectsPage() {
               </div>
             </div>
           </div>
+        </Modal>
+
+        {/* Project Overview Modal */}
+        <Modal
+          isOpen={showProjectOverview}
+          onClose={() => {
+            setShowProjectOverview(false);
+            setSelectedProjectOverview(null);
+          }}
+          title={
+            selectedProjectOverview
+              ? selectedProjectOverview.name
+              : language === "ar"
+              ? "نظرة عامة على المشروع"
+              : "Project Overview"
+          }
+          size="xl"
+        >
+          {selectedProjectOverview && (
+            <div className="space-y-6">
+              {/* Project Header */}
+              <div className="bg-gradient-to-r from-desert-gold/10 to-warm-sand/10 rounded-xl p-6 border border-desert-gold/20">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-elegant-white mb-2">
+                      {selectedProjectOverview.name}
+                    </h3>
+                    <p className="text-stone-gray text-lg mb-4">
+                      {selectedProjectOverview.location}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className="bg-desert-gold/20 text-desert-gold border-desert-gold/30">
+                        {selectedProjectOverview.type}
+                      </Badge>
+                      <Badge
+                        className={`${
+                          selectedProjectOverview.status === "ready"
+                            ? "bg-green-600/20 text-green-400 border-green-600/30"
+                            : selectedProjectOverview.status ===
+                              "under-construction"
+                            ? "bg-yellow-600/20 text-yellow-400 border-yellow-600/30"
+                            : "bg-blue-600/20 text-blue-400 border-blue-600/30"
+                        }`}
+                      >
+                        {selectedProjectOverview.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-desert-gold">
+                      {selectedProjectOverview.budget}{" "}
+                      {language === "ar" ? "ريال" : "SAR"}
+                    </div>
+                    <div className="text-stone-gray">
+                      {language === "ar"
+                        ? "الميزانية الإجمالية"
+                        : "Total Budget"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-stone-gray/20">
+                  <div className="text-2xl font-bold text-elegant-white">
+                    {selectedProjectOverview.totalUnits}
+                  </div>
+                  <div className="text-stone-gray text-sm">
+                    {language === "ar" ? "إجمالي الوحدات" : "Total Units"}
+                  </div>
+                </div>
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-stone-gray/20">
+                  <div className="text-2xl font-bold text-green-400">
+                    {selectedProjectOverview.soldUnits}
+                  </div>
+                  <div className="text-stone-gray text-sm">
+                    {language === "ar" ? "الوحدات المباعة" : "Sold Units"}
+                  </div>
+                </div>
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-stone-gray/20">
+                  <div className="text-2xl font-bold text-blue-400">
+                    {selectedProjectOverview.availableUnits}
+                  </div>
+                  <div className="text-stone-gray text-sm">
+                    {language === "ar" ? "الوحدات المتاحة" : "Available Units"}
+                  </div>
+                </div>
+                <div className="bg-stone-gray/10 rounded-lg p-4 border border-stone-gray/20">
+                  <div className="text-2xl font-bold text-desert-gold">
+                    {Math.round(
+                      (selectedProjectOverview.soldUnits /
+                        selectedProjectOverview.totalUnits) *
+                        100
+                    )}
+                    %
+                  </div>
+                  <div className="text-stone-gray text-sm">
+                    {language === "ar" ? "معدل البيع" : "Sales Rate"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Basic Information */}
+                <div className="bg-obsidian/50 rounded-lg p-6 border border-desert-gold/20">
+                  <h4 className="text-lg font-semibold text-desert-gold mb-4 flex items-center">
+                    <Building2 className="h-5 w-5 mr-2" />
+                    {language === "ar"
+                      ? "المعلومات الأساسية"
+                      : "Basic Information"}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar" ? "المدير:" : "Manager:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.manager}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar"
+                          ? "مستوى التشطيب:"
+                          : "Finishing Level:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.finishingLevel}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar" ? "نوع الملكية:" : "Ownership Type:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.ownershipType}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar" ? "رقم الترخيص:" : "License Number:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.licenseNumber}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Information */}
+                <div className="bg-obsidian/50 rounded-lg p-6 border border-desert-gold/20">
+                  <h4 className="text-lg font-semibold text-desert-gold mb-4 flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2" />
+                    {language === "ar"
+                      ? "المعلومات المالية"
+                      : "Financial Information"}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar" ? "الإيرادات:" : "Revenue:"}
+                      </span>
+                      <span className="text-green-400 font-semibold">
+                        {selectedProjectOverview.revenue}{" "}
+                        {language === "ar" ? "ريال" : "SAR"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar" ? "خطة الدفع:" : "Payment Plan:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.paymentPlan}
+                      </span>
+                    </div>
+                    {selectedProjectOverview.bankName && (
+                      <div className="flex justify-between">
+                        <span className="text-stone-gray">
+                          {language === "ar" ? "البنك:" : "Bank:"}
+                        </span>
+                        <span className="text-elegant-white">
+                          {selectedProjectOverview.bankName}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar" ? "تاريخ البداية:" : "Start Date:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.startDate}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-stone-gray">
+                        {language === "ar"
+                          ? "تاريخ التسليم:"
+                          : "Delivery Date:"}
+                      </span>
+                      <span className="text-elegant-white">
+                        {selectedProjectOverview.deliveryDate}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Features */}
+              {selectedProjectOverview.features &&
+                selectedProjectOverview.features.length > 0 && (
+                  <div className="bg-obsidian/50 rounded-lg p-6 border border-desert-gold/20">
+                    <h4 className="text-lg font-semibold text-desert-gold mb-4 flex items-center">
+                      <Star className="h-5 w-5 mr-2" />
+                      {language === "ar"
+                        ? "مميزات المشروع"
+                        : "Project Features"}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedProjectOverview.features.map(
+                        (feature: string, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-2 rtl:space-x-reverse"
+                          >
+                            <div className="w-2 h-2 bg-desert-gold rounded-full"></div>
+                            <span className="text-elegant-white">
+                              {feature}
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {/* Sales Progress */}
+              <div className="bg-obsidian/50 rounded-lg p-6 border border-desert-gold/20">
+                <h4 className="text-lg font-semibold text-desert-gold mb-4 flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2" />
+                  {language === "ar" ? "تقدم المبيعات" : "Sales Progress"}
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-gray">
+                      {language === "ar" ? "الوحدات المباعة" : "Units Sold"}
+                    </span>
+                    <span className="text-elegant-white">
+                      {selectedProjectOverview.soldUnits} /{" "}
+                      {selectedProjectOverview.totalUnits}
+                    </span>
+                  </div>
+                  <div className="w-full bg-stone-gray/20 rounded-full h-3">
+                    <div
+                      className="bg-gradient-to-r from-desert-gold to-warm-sand h-3 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${
+                          (selectedProjectOverview.soldUnits /
+                            selectedProjectOverview.totalUnits) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  <div className="text-center text-stone-gray text-sm">
+                    {Math.round(
+                      (selectedProjectOverview.soldUnits /
+                        selectedProjectOverview.totalUnits) *
+                        100
+                    )}
+                    % {language === "ar" ? "مكتمل" : "Complete"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-4">
+                <motion.button
+                  onClick={() => setShowProjectOverview(false)}
+                  className="px-6 py-3 border border-desert-gold/20 text-stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {language === "ar" ? "إغلاق" : "Close"}
+                </motion.button>
+                <motion.button
+                  onClick={() => {
+                    setShowProjectOverview(false);
+                    // Navigate to project details or edit
+                    console.log("Edit project:", selectedProjectOverview);
+                  }}
+                  className="px-6 py-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {language === "ar" ? "تعديل المشروع" : "Edit Project"}
+                </motion.button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </PageWrapper>

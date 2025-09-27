@@ -272,8 +272,7 @@ export default function SalesPage() {
     { id: 'dashboard', label: language === 'ar' ? 'لوحة الحجوزات' : 'Booking Dashboard' },
     { id: 'bookings', label: language === 'ar' ? 'إدارة الحجوزات' : 'Booking Management' },
     { id: 'quotes', label: language === 'ar' ? 'العروض والأسعار' : 'Quotes & Pricing' },
-    { id: 'contracts', label: language === 'ar' ? 'العقود' : 'Contracts' },
-    { id: 'reminders', label: language === 'ar' ? 'تذكيرات الدفع' : 'Payment Reminders' }
+    { id: 'contracts', label: language === 'ar' ? 'العقود' : 'Contracts' }
   ];
 
   // Booking columns
