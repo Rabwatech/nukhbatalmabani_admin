@@ -105,6 +105,7 @@ const StepAssociations: React.FC<StepProps> = ({
             <WizardFormField
               control={form.control}
               name="ownersAssociation.isRequired"
+              label=""
               render={({ field }) => (
                 <Switch
                   checked={field.value}
