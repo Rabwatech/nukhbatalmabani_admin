@@ -1,0 +1,22 @@
+# Vercel ignore file
+.DS_Store
+*.log
+node_modules
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build artifacts that don't need to be deployed
+.next/cache
+.turbo
+
+# Documentation
+README.md
+design.md
