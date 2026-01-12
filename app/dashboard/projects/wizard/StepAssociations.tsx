@@ -1,393 +1,214 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React from "react";
+import { useFormContext } from "react-hook-form";
 import { useDirection } from "@/context/DirectionContext";
 import { StepProps } from "./types";
-import { associationsSchema } from "./validation";
 import WizardFormField from "@/components/shared/WizardFormField";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Users, Building, Plus, Trash2, Edit3, DollarSign } from "lucide-react";
+import { Users, FileText } from "lucide-react";
+import FileUploadArea from "@/components/shared/FileUploadArea";
 
 const StepAssociations: React.FC<StepProps> = ({
   data,
   onUpdate,
   onNext,
   onPrevious,
-  isFirstStep,
-  isLastStep,
-  isSubmitting,
 }) => {
-  const { language, isRTL } = useDirection();
-  const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
-  const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(
-    null
-  );
-
-  const form = useForm({
-    resolver: zodResolver(associationsSchema),
-    defaultValues: data.associations,
-    mode: "onChange",
-  });
-
-  const onSubmit = (formData: any) => {
-    onUpdate({ associations: formData });
-    onNext();
-  };
-
-  const addRule = () => {
-    const currentRules = form.getValues("ownersAssociation.rules") || [];
-    form.setValue("ownersAssociation.rules", [...currentRules, ""]);
-  };
-
-  const removeRule = (index: number) => {
-    const currentRules = form.getValues("ownersAssociation.rules") || [];
-    const newRules = currentRules.filter((_: any, i: number) => i !== index);
-    form.setValue("ownersAssociation.rules", newRules);
-  };
-
-  const addService = () => {
-    const currentServices = form.getValues("ownersAssociation.services") || [];
-    form.setValue("ownersAssociation.services", [...currentServices, ""]);
-  };
-
-  const removeService = (index: number) => {
-    const currentServices = form.getValues("ownersAssociation.services") || [];
-    const newServices = currentServices.filter(
-      (_: any, i: number) => i !== index
-    );
-    form.setValue("ownersAssociation.services", newServices);
-  };
-
-  const addManagementService = () => {
-    const currentServices = form.getValues("managementCompany.services") || [];
-    form.setValue("managementCompany.services", [...currentServices, ""]);
-  };
-
-  const removeManagementService = (index: number) => {
-    const currentServices = form.getValues("managementCompany.services") || [];
-    const newServices = currentServices.filter(
-      (_: any, i: number) => i !== index
-    );
-    form.setValue("managementCompany.services", newServices);
-  };
-
-  const rules = form.watch("ownersAssociation.rules") || [];
-  const services = form.watch("ownersAssociation.services") || [];
-  const managementServices = form.watch("managementCompany.services") || [];
+  const { language } = useDirection();
+  const form = useFormContext();
 
   return (
     <div className="space-y-6">
-      {/* Owners Association Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {language === "ar" ? "جمعية الملاك" : "Owners Association"}
+            {language === "ar" ? "جمعية الملاك" : "Owner Association"}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Association Required */}
-          <div className="flex items-center space-x-2">
-            <WizardFormField
-              control={form.control}
-              name="ownersAssociation.isRequired"
-              label=""
-              render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <label className="text-sm font-medium">
-              {language === "ar" ? "مطلوبة" : "Required"}
-            </label>
-          </div>
-
-          {/* Monthly Fee */}
+          {/* Company Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <WizardFormField
               control={form.control}
-              name="ownersAssociation.monthlyFee"
-              label={language === "ar" ? "الرسوم الشهرية" : "Monthly Fee"}
+              name="associations.companyName"
+              label={language === "ar" ? "اسم شركة الجمعية" : "Association Company Name"}
               render={({ field }) => (
                 <Input
                   {...field}
-                  type="number"
-                  min="0"
                   placeholder={
-                    language === "ar" ? "الرسوم الشهرية" : "Monthly fee"
-                  }
-                  onChange={(e) =>
-                    field.onChange(parseFloat(e.target.value) || 0)
+                    language === "ar" ? "أدخل اسم الشركة" : "Enter company name"
                   }
                 />
               )}
             />
             <WizardFormField
               control={form.control}
-              name="ownersAssociation.currency"
-              label={language === "ar" ? "العملة" : "Currency"}
+              name="associations.crNumber"
+              label={language === "ar" ? "رقم السجل التجاري" : "CR Number"}
               render={({ field }) => (
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        language === "ar" ? "اختر العملة" : "Select currency"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SAR">
-                      {language === "ar" ? "ريال سعودي" : "SAR"}
-                    </SelectItem>
-                    <SelectItem value="USD">
-                      {language === "ar" ? "دولار أمريكي" : "USD"}
-                    </SelectItem>
-                    <SelectItem value="EUR">
-                      {language === "ar" ? "يورو" : "EUR"}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  {...field}
+                  placeholder={
+                    language === "ar" ? "أدخل السجل التجاري" : "Enter CR number"
+                  }
+                />
               )}
             />
           </div>
 
-          {/* Services */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-md font-semibold">
-                {language === "ar" ? "الخدمات" : "Services"}
-              </h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addService}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {language === "ar" ? "إضافة خدمة" : "Add Service"}
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {services.map((service: string, index: number) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    value={service}
-                    onChange={(e) => {
-                      const newServices = [...services];
-                      newServices[index] = e.target.value;
-                      form.setValue("ownersAssociation.services", newServices);
-                    }}
-                    placeholder={
-                      language === "ar"
-                        ? "أدخل اسم الخدمة"
-                        : "Enter service name"
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeService(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Rules */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-md font-semibold">
-                {language === "ar"
-                  ? "القوانين واللوائح"
-                  : "Rules & Regulations"}
-              </h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addRule}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {language === "ar" ? "إضافة قاعدة" : "Add Rule"}
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {rules.map((rule: string, index: number) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Textarea
-                    value={rule}
-                    onChange={(e) => {
-                      const newRules = [...rules];
-                      newRules[index] = e.target.value;
-                      form.setValue("ownersAssociation.rules", newRules);
-                    }}
-                    placeholder={
-                      language === "ar"
-                        ? "أدخل القاعدة أو اللائحة"
-                        : "Enter rule or regulation"
-                    }
-                    rows={2}
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeRule(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Management Company Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            {language === "ar" ? "شركة الإدارة" : "Management Company"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Company Name */}
           <WizardFormField
             control={form.control}
-            name="managementCompany.name"
-            label={language === "ar" ? "اسم الشركة" : "Company Name"}
+            name="associations.headquarters"
+            label={language === "ar" ? "المقر الرئيسي" : "Headquarters"}
             render={({ field }) => (
               <Input
                 {...field}
                 placeholder={
-                  language === "ar"
-                    ? "أدخل اسم شركة الإدارة"
-                    : "Enter management company name"
+                  language === "ar" ? "أدخل المقر الرئيسي" : "Enter headquarters"
                 }
               />
             )}
           />
 
-          {/* Contact Information */}
-          <div className="space-y-4">
-            <h4 className="text-md font-semibold">
-              {language === "ar" ? "معلومات الاتصال" : "Contact Information"}
-            </h4>
+          {/* Owner Details */}
+          <div className="border-t border-border pt-4 mt-2">
+            <h4 className="text-sm font-semibold mb-4 text-muted-foreground">{language === "ar" ? "بيانات المالك" : "Owner Details"}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <WizardFormField
                 control={form.control}
-                name="managementCompany.contactInfo.phone"
-                label={language === "ar" ? "رقم الهاتف" : "Phone Number"}
+                name="associations.ownerName"
+                label={language === "ar" ? "اسم المالك" : "Owner Name"}
                 render={({ field }) => (
                   <Input
                     {...field}
-                    type="tel"
                     placeholder={
-                      language === "ar" ? "رقم الهاتف" : "Phone number"
+                      language === "ar" ? "أدخل اسم المالك" : "Enter owner name"
                     }
                   />
                 )}
               />
               <WizardFormField
                 control={form.control}
-                name="managementCompany.contactInfo.email"
-                label={language === "ar" ? "البريد الإلكتروني" : "Email"}
+                name="associations.ownerMobile"
+                label={language === "ar" ? "رقم الجوال (أبشر)" : "Mobile Number (Absher)"}
                 render={({ field }) => (
                   <Input
                     {...field}
-                    type="email"
                     placeholder={
-                      language === "ar" ? "البريد الإلكتروني" : "Email address"
+                      language === "ar" ? "أدخل رقم الجوال" : "Enter mobile number"
                     }
                   />
                 )}
               />
             </div>
-            <WizardFormField
-              control={form.control}
-              name="managementCompany.contactInfo.address"
-              label={language === "ar" ? "العنوان" : "Address"}
-              render={({ field }) => (
-                <Textarea
-                  {...field}
-                  placeholder={
-                    language === "ar" ? "عنوان الشركة" : "Company address"
-                  }
-                  rows={3}
-                />
-              )}
-            />
-          </div>
-
-          {/* Management Services */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-md font-semibold">
-                {language === "ar" ? "خدمات الإدارة" : "Management Services"}
-              </h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addManagementService}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {language === "ar" ? "إضافة خدمة" : "Add Service"}
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {managementServices.map((service: string, index: number) => (
-                <div key={index} className="flex items-center gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <WizardFormField
+                control={form.control}
+                name="associations.ownerIdNumber"
+                label={language === "ar" ? "رقم الهوية" : "ID Number"}
+                render={({ field }) => (
                   <Input
-                    value={service}
-                    onChange={(e) => {
-                      const newServices = [...managementServices];
-                      newServices[index] = e.target.value;
-                      form.setValue("managementCompany.services", newServices);
-                    }}
+                    {...field}
                     placeholder={
-                      language === "ar"
-                        ? "أدخل اسم الخدمة"
-                        : "Enter service name"
+                      language === "ar" ? "أدخل رقم الهوية" : "Enter ID number"
                     }
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeManagementService(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                )}
+              />
+              <WizardFormField
+                control={form.control}
+                name="associations.proxyNumber"
+                label={language === "ar" ? "رقم الوكالة (اختياري)" : "Proxy Number (Optional)"}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder={
+                      language === "ar" ? "أدخل رقم الوكالة" : "Enter proxy number"
+                    }
+                  />
+                )}
+              />
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* File Attachments Placeholder - In a real app, this would use the generic File Upload component */}
+      {/* Attachments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            {language === "ar" ? "المرفقات" : "Attachments"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <HelperFileUpload
+            name="associations.attachments.cr"
+            label={language === "ar" ? "السجل التجاري" : "Commercial Record"}
+            form={form}
+          />
+          <HelperFileUpload
+            name="associations.attachments.nationalAddress"
+            label={language === "ar" ? "العنوان الوطني" : "National Address"}
+            form={form}
+          />
+          <HelperFileUpload
+            name="associations.attachments.ownerId"
+            label={language === "ar" ? "هوية المالك" : "Owner ID"}
+            form={form}
+          />
+          <HelperFileUpload
+            name="associations.attachments.proxy"
+            label={language === "ar" ? "الوكالة (إن وجدت)" : "Proxy (If any)"}
+            form={form}
+          />
+          <HelperFileUpload
+            name="associations.attachments.taxNumber"
+            label={language === "ar" ? "الرقم الضريبي" : "Tax Number"}
+            form={form}
+          />
+          <HelperFileUpload
+            name="associations.attachments.contract"
+            label={language === "ar" ? "العقد" : "Contract"}
+            form={form}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Helper component to handle single file upload logic with FileUploadArea
+const HelperFileUpload = ({ name, label, form }: { name: string; label: string; form: any }) => {
+  const currentFile = form.watch(name);
+  const files = currentFile ? [currentFile] : [];
+
+  const handleFilesSelected = (selectedFiles: File[]) => {
+    if (selectedFiles.length > 0) {
+      form.setValue(name, selectedFiles[0], { shouldValidate: true });
+    }
+  };
+
+  const handleFileRemove = () => {
+    form.setValue(name, undefined, { shouldValidate: true });
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">{label}</label>
+      <FileUploadArea
+        files={files}
+        onFilesSelected={handleFilesSelected}
+        onFileRemove={handleFileRemove}
+        accept=".pdf,.jpg,.jpeg,.png"
+        multiple={false}
+        label=""
+      />
     </div>
   );
 };

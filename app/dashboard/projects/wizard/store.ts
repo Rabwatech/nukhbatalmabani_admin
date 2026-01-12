@@ -6,7 +6,7 @@ interface ProjectWizardStore {
   projectData: ProjectWizardData;
   currentStep: number;
   completedSteps: number[];
-  
+
   // Actions
   updateProjectData: (data: Partial<ProjectWizardData>) => void;
   updateStepData: (stepKey: keyof ProjectWizardData, data: any) => void;
@@ -15,12 +15,12 @@ interface ProjectWizardStore {
   markStepIncomplete: (step: number) => void;
   isStepCompleted: (step: number) => boolean;
   getStepCompletionStatus: () => Record<number, boolean>;
-  
+
   // Draft management
   saveDraft: (data: ProjectWizardData) => void;
   loadDraft: () => ProjectWizardData | null;
   clearDraft: () => void;
-  
+
   // Reset
   resetWizard: () => void;
 }
@@ -29,47 +29,40 @@ const initialProjectData: ProjectWizardData = {
   basicInfo: {
     name: { ar: '', en: '' },
     description: { ar: '', en: '' },
-    location: { ar: '', en: '' },
+    locationLink: '',
     city: '',
     district: '',
-    address: '',
+    ownerName: '',
+    contractorName: '',
     developer: '',
     licenseNumber: '',
     totalArea: 0,
-    landArea: 0,
     projectType: 'residential',
-    status: 'planning',
+    status: 'planned',
+    features: [],
   },
+  landPieces: [],
   media: {
     images: [],
     videos: [],
     floorPlans: [],
     brochures: [],
   },
+  unitModels: [],
   buildings: {
     buildings: [],
   },
   units: {
-    unitTypes: [],
-  },
-  features: {
-    amenities: [],
-    services: [],
-  },
-  pricing: {
-    paymentPlans: [],
-    pricePerSqm: 0,
-    currency: 'SAR',
-    priceRange: { min: 0, max: 0 },
+    units: [],
   },
   associations: {
-    ownersAssociation: {
-      isRequired: false,
-      monthlyFee: 0,
-      currency: 'SAR',
-      services: [],
-      rules: [],
-    },
+    companyName: '',
+    crNumber: '',
+    headquarters: '',
+    ownerName: '',
+    ownerMobile: '',
+    ownerIdNumber: '',
+    attachments: {},
   },
   review: {
     isReady: false,

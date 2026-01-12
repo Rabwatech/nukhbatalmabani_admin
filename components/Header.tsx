@@ -109,9 +109,8 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                       setLanguage('ar');
                       setShowLangDropdown(false);
                     }}
-                    className={`block w-full px-4 py-2 text-sm text-right hover:bg-stone-gray/10 transition-colors duration-200 ${
-                      language === 'ar' ? 'text-desert-gold bg-stone-gray/5' : 'text-stone-gray'
-                    }`}
+                    className={`block w-full px-4 py-2 text-sm text-right hover:bg-stone-gray/10 transition-colors duration-200 ${language === 'ar' ? 'text-desert-gold bg-stone-gray/5' : 'text-stone-gray'
+                      }`}
                   >
                     العربية
                   </button>
@@ -120,9 +119,8 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                       setLanguage('en');
                       setShowLangDropdown(false);
                     }}
-                    className={`block w-full px-4 py-2 text-sm text-left hover:bg-stone-gray/10 transition-colors duration-200 ${
-                      language === 'en' ? 'text-desert-gold bg-stone-gray/5' : 'text-stone-gray'
-                    }`}
+                    className={`block w-full px-4 py-2 text-sm text-left hover:bg-stone-gray/10 transition-colors duration-200 ${language === 'en' ? 'text-desert-gold bg-stone-gray/5' : 'text-stone-gray'
+                      }`}
                   >
                     English
                   </button>

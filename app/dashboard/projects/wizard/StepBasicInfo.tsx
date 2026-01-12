@@ -139,43 +139,23 @@ const StepBasicInfo: React.FC<StepProps> = ({
             />
           </div>
 
-          {/* Location */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <WizardFormField
-              control={form.control}
-              name="basicInfo.location.ar"
-              label={language === "ar" ? "الموقع (عربي)" : "Location (Arabic)"}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder={
-                    language === "ar"
-                      ? "أدخل الموقع بالعربية"
-                      : "Enter location in Arabic"
-                  }
-                  dir="rtl"
-                />
-              )}
-            />
-            <WizardFormField
-              control={form.control}
-              name="basicInfo.location.en"
-              label={
-                language === "ar" ? "الموقع (إنجليزي)" : "Location (English)"
-              }
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder={
-                    language === "ar"
-                      ? "أدخل الموقع بالإنجليزية"
-                      : "Enter location in English"
-                  }
-                  dir="ltr"
-                />
-              )}
-            />
-          </div>
+          {/* Location Link (Google Maps) */}
+          <WizardFormField
+            control={form.control}
+            name="basicInfo.locationLink"
+            label={language === "ar" ? "رابط الموقع (Google Maps)" : "Location Link (Google Maps)"}
+            render={({ field }) => (
+              <Input
+                {...field}
+                placeholder={
+                  language === "ar"
+                    ? "أدخل رابط الموقع على خرائط جوجل"
+                    : "Enter Google Maps location link"
+                }
+                dir="ltr"
+              />
+            )}
+          />
 
           {/* City and District */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -207,22 +187,31 @@ const StepBasicInfo: React.FC<StepProps> = ({
             />
           </div>
 
-          {/* Address */}
-          <WizardFormField
-            control={form.control}
-            name="basicInfo.address"
-            label={language === "ar" ? "العنوان التفصيلي" : "Detailed Address"}
-            render={({ field }) => (
-              <Input
-                {...field}
-                placeholder={
-                  language === "ar"
-                    ? "أدخل العنوان التفصيلي"
-                    : "Enter detailed address"
-                }
-              />
-            )}
-          />
+          {/* Owner & Contractor */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <WizardFormField
+              control={form.control}
+              name="basicInfo.ownerName"
+              label={language === "ar" ? "اسم المالك" : "Owner Name"}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder={language === "ar" ? "أدخل اسم المالك" : "Enter Owner Name"}
+                />
+              )}
+            />
+            <WizardFormField
+              control={form.control}
+              name="basicInfo.contractorName"
+              label={language === "ar" ? "اسم المقاول" : "Contractor Name"}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder={language === "ar" ? "أدخل اسم المقاول" : "Enter Contractor Name"}
+                />
+              )}
+            />
+          </div>
 
           {/* Developer and License */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -259,7 +248,7 @@ const StepBasicInfo: React.FC<StepProps> = ({
           </div>
 
           {/* Areas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <WizardFormField
               control={form.control}
               name="basicInfo.totalArea"
@@ -274,23 +263,6 @@ const StepBasicInfo: React.FC<StepProps> = ({
                     language === "ar"
                       ? "أدخل المساحة الإجمالية"
                       : "Enter total area"
-                  }
-                  onChange={(e) =>
-                    field.onChange(parseFloat(e.target.value) || 0)
-                  }
-                />
-              )}
-            />
-            <WizardFormField
-              control={form.control}
-              name="basicInfo.landArea"
-              label={language === "ar" ? "مساحة الأرض (م²)" : "Land Area (m²)"}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  type="number"
-                  placeholder={
-                    language === "ar" ? "أدخل مساحة الأرض" : "Enter land area"
                   }
                   onChange={(e) =>
                     field.onChange(parseFloat(e.target.value) || 0)
@@ -353,8 +325,8 @@ const StepBasicInfo: React.FC<StepProps> = ({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="planning">
-                      {language === "ar" ? "قيد التخطيط" : "Planning"}
+                    <SelectItem value="planned">
+                      {language === "ar" ? "مخطط" : "Planned"}
                     </SelectItem>
                     <SelectItem value="under_construction">
                       {language === "ar" ? "قيد الإنشاء" : "Under Construction"}
@@ -367,6 +339,33 @@ const StepBasicInfo: React.FC<StepProps> = ({
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              )}
+            />
+          </div>
+
+          {/* Features & Services */}
+          <div className="grid grid-cols-1 gap-4">
+            <label className="text-sm font-medium text-elegant-white">
+              {language === "ar" ? "المميزات والخدمات" : "Features & Services"}
+            </label>
+            {/* Simple Text Area for now, or could be a tag input. Using Textarea for simplicity as per MVP, splitting by lines */}
+            <WizardFormField
+              control={form.control}
+              name="basicInfo.features"
+              label=""
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Textarea
+                    {...field}
+                    value={Array.isArray(field.value) ? field.value.join('\n') : field.value}
+                    onChange={(e) => field.onChange(e.target.value.split('\n'))}
+                    placeholder={language === "ar" ? "أدخل المميزات (كل ميزة في سطر)" : "Enter features (one per line)"}
+                    rows={5}
+                  />
+                  <p className="text-xs text-elegant-white/50">
+                    {language === "ar" ? "أدخل كل ميزة في سطر جديد" : "Enter each feature on a new line"}
+                  </p>
+                </div>
               )}
             />
           </div>

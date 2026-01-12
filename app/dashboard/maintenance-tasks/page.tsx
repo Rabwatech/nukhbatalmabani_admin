@@ -19,6 +19,37 @@ import SelectContext from "@/components/ui/select-context";
 import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 import UploadLabel from "@/components/ui/UploadLabel";
+import { MaintenanceCategory, MaintenanceStatus } from "@/lib/types";
+
+// Mock Sub-categories
+const MOCK_SUB_CATEGORIES: Record<MaintenanceCategory, { id: string; ar: string; en: string }[]> = {
+  electricity: [
+    { id: 'light_switch', ar: 'مفاتيح إنارة', en: 'Light Switch' },
+    { id: 'wiring', ar: 'تكييف وتمديدات', en: 'Wiring/AC' },
+    { id: 'socket', ar: 'أفياش كهرباء', en: 'Power Socket' },
+  ],
+  plumbing: [
+    { id: 'leak', ar: 'تسرب مياه', en: 'Water Leak' },
+    { id: 'mixer', ar: 'خلاط مياه', en: 'Water Mixer' },
+    { id: 'drain', ar: 'انسداد تصريف', en: 'Drain Clog' },
+  ],
+  paint: [
+    { id: 'wall_paint', ar: 'دهان جدران', en: 'Wall Paint' },
+    { id: 'ceiling_paint', ar: 'دهان أسقف', en: 'Ceiling Paint' },
+  ],
+  tiles: [{ id: 'broken_tile', ar: 'بلاط مكسور', en: 'Broken Tile' }],
+  doors: [{ id: 'lock', ar: 'كيلون باب', en: 'Door Lock' }],
+  aluminum: [{ id: 'window', ar: 'نافذة', en: 'Window' }],
+  smart_system: [{ id: 'intercom', ar: 'انتركم', en: 'Intercom' }],
+  elevator: [{ id: 'stuck', ar: 'عطل مصعد', en: 'Elevator Stuck' }],
+  other: [{ id: 'general', ar: 'عام', en: 'General' }],
+};
+
+const MOCK_EXTERNAL_COMPANIES = [
+  { id: 'ext1', name: { ar: 'شركة الصيانة الأولى', en: 'First Maintenance Co.' } },
+  { id: 'ext2', name: { ar: 'مؤسسة السباكة الحديثة', en: 'Modern Plumbing Est.' } },
+];
+
 
 // Mock data for demonstration
 const mockProjects = [
@@ -52,18 +83,25 @@ const mockStaff = [
     label: { ar: "أحمد العتيبي", en: "Ahmed Al-Otaibi" },
   },
 ];
-const issueTypes = [
+const issueTypes: { value: MaintenanceCategory | 'all'; label: { ar: string; en: string } }[] = [
   { value: "all", label: { ar: "جميع الأنواع", en: "All Types" } },
-  { value: "leak", label: { ar: "تسرب", en: "Leak" } },
-  { value: "ac", label: { ar: "تكييف", en: "AC" } },
   { value: "electricity", label: { ar: "كهرباء", en: "Electricity" } },
-  { value: "painting", label: { ar: "دهان", en: "Painting" } },
+  { value: "plumbing", label: { ar: "سباكة", en: "Plumbing" } },
+  { value: "paint", label: { ar: "دهان", en: "Paint" } },
+  { value: "tiles", label: { ar: "بلاط", en: "Tiles" } },
+  { value: "doors", label: { ar: "أبواب", en: "Doors" } },
+  { value: "aluminum", label: { ar: "ألمنيوم", en: "Aluminum" } },
+  { value: "smart_system", label: { ar: "أنظمة ذكية", en: "Smart Systems" } },
+  { value: "elevator", label: { ar: "مصاعد", en: "Elevators" } },
+  { value: "other", label: { ar: "أخرى", en: "Other" } },
 ];
-const statusOptions = [
+const statusOptions: { value: MaintenanceStatus | 'all'; label: { ar: string; en: string } }[] = [
   { value: "all", label: { ar: "جميع الحالات", en: "All Statuses" } },
   { value: "new", label: { ar: "جديد", en: "New" } },
-  { value: "in-progress", label: { ar: "جاري التنفيذ", en: "In Progress" } },
+  { value: "in_progress", label: { ar: "جاري التنفيذ", en: "In Progress" } },
   { value: "completed", label: { ar: "تم الإنجاز", en: "Completed" } },
+  { value: "closed", label: { ar: "مغلق", en: "Closed" } },
+  { value: "overdue", label: { ar: "متأخر", en: "Overdue" } },
   { value: "rejected", label: { ar: "مرفوض", en: "Rejected" } },
 ];
 const projectOptions = [
@@ -74,14 +112,11 @@ const projectOptions = [
 const assignedOptions = [
   { value: "all", label: { ar: "جميع الموظفين", en: "All Employees" } },
   { value: "unassigned", label: { ar: "غير محدد", en: "Unassigned" } },
-  {
-    value: "فاطمة الحربي / Fatima Al-Harbi",
-    label: { ar: "فاطمة الحربي", en: "Fatima Al-Harbi" },
-  },
-  {
-    value: "أحمد العتيبي / Ahmed Al-Otaibi",
-    label: { ar: "أحمد العتيبي", en: "Ahmed Al-Otaibi" },
-  },
+  ...mockStaff,
+  ...MOCK_EXTERNAL_COMPANIES.map(c => ({
+    value: c.id,
+    label: c.name
+  }))
 ];
 const dateOptions = [
   { value: "all", label: { ar: "جميع التواريخ", en: "All Dates" } },
@@ -90,20 +125,22 @@ const dateOptions = [
   { value: "this-month", label: { ar: "هذا الشهر", en: "This Month" } },
 ];
 
+// Local extended type for the page
 type Request = {
   id: string;
   project: string;
   unit: string;
-  issueType: string;
-  status: string;
+  issueType: MaintenanceCategory;
+  subCategory?: string;
+  status: MaintenanceStatus;
   date: string;
-  assigned: string;
+  assigned: string; // Employee Name or Ext Company Name
   description: string;
   attachment: string;
   preferredTime: string;
   reportedBy: string;
   notes?: string;
-  report?: string;
+  priority: 'normal' | 'urgent';
   history: { date: string; action: string; by: string }[];
 };
 
@@ -112,28 +149,32 @@ const initialRequests: Request[] = [
     id: "REQ-1001",
     project: "مشروع 1 / Project 1",
     unit: "A101",
-    issueType: "تسرب",
-    status: "new",
-    date: "2024-06-01",
+    issueType: "plumbing",
+    subCategory: "leak",
+    status: "overdue",
+    date: "2024-05-25", // Old date => overdue
     assigned: "فاطمة الحربي / Fatima Al-Harbi",
     description: "يوجد تسرب مياه في الحمام الرئيسي.",
     attachment: "",
     preferredTime: "10:00",
     reportedBy: "مالك",
-    history: [{ date: "2024-06-01", action: "تم إنشاء الطلب", by: "العميل" }],
+    priority: "urgent",
+    history: [{ date: "2024-05-25", action: "تم إنشاء الطلب", by: "العميل" }],
   },
   {
     id: "REQ-1002",
     project: "مشروع 2 / Project 2",
     unit: "B202",
-    issueType: "كهرباء",
-    status: "in-progress",
+    issueType: "electricity",
+    subCategory: "wiring",
+    status: "in_progress",
     date: "2024-06-02",
     assigned: "أحمد العتيبي / Ahmed Al-Otaibi",
     description: "انقطاع كهرباء متكرر.",
     attachment: "",
     preferredTime: "",
     reportedBy: "مفوض",
+    priority: "normal",
     history: [
       { date: "2024-06-02", action: "تم تعيين موظف", by: "الإدارة" },
       { date: "2024-06-02", action: "تم إنشاء الطلب", by: "العميل" },
@@ -148,6 +189,11 @@ export default function MaintenanceTasksPage() {
   const [showDetail, setShowDetail] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   // Filter state
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [closingRequestId, setClosingRequestId] = useState<string | null>(null);
+  const [otp, setOtp] = useState(["", "", "", ""]);
+
+  // Filter state
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
@@ -160,40 +206,47 @@ export default function MaintenanceTasksPage() {
       label: { ar: "طلبات جديدة", en: "New Requests" },
       color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
       badge: "info",
-      icon: null, // Optionally add icon if you have one in your system
     },
     {
-      key: "in-progress",
+      key: "in_progress",
       label: { ar: "جاري التنفيذ", en: "In Progress" },
       color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
       badge: "warning",
-      icon: null,
     },
     {
       key: "completed",
-      label: { ar: "مكتملة", en: "Completed" },
-      color: "bg-green-500/20 text-green-400 border-green-500/30",
+      label: { ar: "تم الإنجاز", en: "Completed" },
+      color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
       badge: "success",
-      icon: null,
     },
     {
-      key: "rejected",
-      label: { ar: "مرفوضة", en: "Rejected" },
-      color: "bg-red-500/20 text-red-400 border-red-500/30",
+      key: "closed",
+      label: { ar: "مغلق", en: "Closed" },
+      color: "bg-stone-500/20 text-stone-400 border-stone-500/30",
+      badge: "default",
+    },
+    {
+      key: "overdue",
+      label: { ar: "متأخر", en: "Overdue" },
+      color: "bg-red-600/20 text-red-500 border-red-600/30",
       badge: "error",
-      icon: null,
     },
   ];
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {
       new: 0,
-      "in-progress": 0,
+      in_progress: 0,
       completed: 0,
+      closed: 0,
+      overdue: 0,
       rejected: 0,
     };
     requests.forEach((r) => {
-      if (counts[r.status] !== undefined) counts[r.status]++;
+      // Check for overdue dynamically
+      let status = r.status;
+      /* Mock logic for display counts handled by static data for now */
+      if (counts[status] !== undefined) counts[status]++;
     });
     return counts;
   }, [requests]);
@@ -218,7 +271,7 @@ export default function MaintenanceTasksPage() {
       if (
         issueTypeFilter !== "all" &&
         req.issueType !==
-          issueTypes.find((i) => i.value === issueTypeFilter)?.label[language]
+        issueTypes.find((i) => i.value === issueTypeFilter)?.label[language]
       )
         return false;
       // Date filter (simple demo)
@@ -266,16 +319,13 @@ export default function MaintenanceTasksPage() {
   // Table columns
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case "new":
-        return "info";
-      case "in-progress":
-        return "warning";
-      case "completed":
-        return "success";
-      case "rejected":
-        return "error";
-      default:
-        return "default";
+      case "new": return "info";
+      case "in_progress": return "warning";
+      case "completed": return "success";
+      case "closed": return "default";
+      case "overdue": return "error";
+      case "rejected": return "error";
+      default: return "default";
     }
   };
   const getIssueTypeVariant = (issueType: string) => {
@@ -299,12 +349,17 @@ export default function MaintenanceTasksPage() {
     {
       key: "issueType",
       label: language === "ar" ? "نوع المشكلة" : "Issue Type",
-      render: (value: string) => (
-        <StatusBadge
-          status={value}
-          variant={getIssueTypeVariant(value)}
-          size="md"
-        />
+      render: (value: any, row: Request) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-elegant-white">
+            {issueTypes.find(i => i.value === value)?.label[language] || value}
+          </span>
+          {row.subCategory && (
+            <span className="text-xs text-stone-gray">
+              {MOCK_SUB_CATEGORIES[value as MaintenanceCategory]?.find(s => s.id === row.subCategory)?.[language] || row.subCategory}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -350,10 +405,12 @@ export default function MaintenanceTasksPage() {
     projectId: "",
     unitId: "",
     issueType: "",
+    subCategory: "",
     description: "",
     attachment: "",
     preferredTime: "",
     reportedBy: "",
+    priority: "normal",
   });
   const [formError, setFormError] = useState("");
 
@@ -385,13 +442,13 @@ export default function MaintenanceTasksPage() {
           ? `${project.name} – ${project.type[language]} – ${unit?.number}`
           : "",
         unit: unit?.number || "",
-        issueType:
-          issueTypes.find((i) => i.value === form.issueType)?.label[language] ||
-          "",
+        issueType: form.issueType as MaintenanceCategory,
+        subCategory: form.subCategory,
         status: "new",
         date: new Date().toISOString().slice(0, 10),
         assigned: "unassigned",
         description: form.description,
+        priority: form.priority as 'normal' | 'urgent',
         attachment: form.attachment,
         preferredTime: form.preferredTime,
         reportedBy: form.reportedBy,
@@ -412,13 +469,53 @@ export default function MaintenanceTasksPage() {
       projectId: "",
       unitId: "",
       issueType: "",
+      subCategory: "", // Reset
       description: "",
       attachment: "",
       preferredTime: "",
       reportedBy: "",
+      priority: "normal",
     });
     setFormError("");
   }
+
+  // OTP Handlers
+  const handleRequestClose = (req: Request) => {
+    setClosingRequestId(req.id);
+    setOtp(["", "", "", ""]);
+    setShowOtpModal(true);
+  };
+
+  const handleVerifyOtp = () => {
+    // Verification logic (mock)
+    if (otp.join("").length === 4) {
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === closingRequestId
+            ? { ...r, status: "closed", completionCode: otp.join("") }
+            : r
+        )
+      );
+      // Close detail if open on this request
+      if (selectedRequest?.id === closingRequestId) {
+        setSelectedRequest((prev) =>
+          prev ? { ...prev, status: "closed" } : null
+        );
+      }
+      setShowOtpModal(false);
+      setClosingRequestId(null);
+    } else {
+      alert("Invalid Code");
+    }
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    // Auto-focus next input logic can go here (simplified for mock)
+  };
 
   // Excel export handler
   function handleExportExcel() {
@@ -452,17 +549,16 @@ export default function MaintenanceTasksPage() {
               onClick={() => setActiveStatusCard(isActive ? null : card.key)}
               className={`min-w-[140px] flex flex-col items-center justify-center px-6 py-4 rounded-xl shadow-md font-bold border-2 transition-all duration-200
                 ${card.color}
-                ${
-                  isActive
-                    ? "border-desert-gold shadow-lg"
-                    : "border-transparent hover:border-desert-gold"
+                ${isActive
+                  ? "border-desert-gold shadow-lg"
+                  : "border-transparent hover:border-desert-gold"
                 }
               `}
               style={{ fontFamily: "inherit" }}
             >
               <span className="text-2xl mb-1">{statusCounts[card.key]}</span>
               <span className="text-sm font-medium">
-                {card.label[language]}
+                {card.label[language] as string}
               </span>
             </button>
           );
@@ -641,20 +737,16 @@ export default function MaintenanceTasksPage() {
                       ?.units.map((u) => ({
                         value: u.id,
                         label: {
-                          ar: `${
-                            mockProjects.find((p) => p.id === form.projectId)
-                              ?.name
-                          } – ${
-                            mockProjects.find((p) => p.id === form.projectId)
+                          ar: `${mockProjects.find((p) => p.id === form.projectId)
+                            ?.name
+                            } – ${mockProjects.find((p) => p.id === form.projectId)
                               ?.type[language]
-                          } – ${u.number}`,
-                          en: `${
-                            mockProjects.find((p) => p.id === form.projectId)
-                              ?.name
-                          } – ${
-                            mockProjects.find((p) => p.id === form.projectId)
+                            } – ${u.number}`,
+                          en: `${mockProjects.find((p) => p.id === form.projectId)
+                            ?.name
+                            } – ${mockProjects.find((p) => p.id === form.projectId)
                               ?.type[language]
-                          } – ${u.number}`,
+                            } – ${u.number}`,
                         },
                       })) || []
                   }
@@ -672,13 +764,31 @@ export default function MaintenanceTasksPage() {
               required
             >
               <SelectContext
-                options={issueTypes}
+                options={issueTypes.filter(i => i.value !== 'all')}
                 value={form.issueType}
                 onChange={(value) => handleFormChange("issueType", value)}
                 placeholder={language === "ar" ? "اختر النوع" : "Select Type"}
                 language={language}
               />
             </FormField>
+
+            {form.issueType && MOCK_SUB_CATEGORIES[form.issueType as MaintenanceCategory] && (
+              <FormField
+                label={language === "ar" ? "التفاصيل" : "Sub-Category"}
+                required
+              >
+                <SelectContext
+                  options={MOCK_SUB_CATEGORIES[form.issueType as MaintenanceCategory].map(s => ({
+                    value: s.id,
+                    label: { ar: s.ar, en: s.en }
+                  }))}
+                  value={form.subCategory}
+                  onChange={(value) => handleFormChange("subCategory", value)}
+                  placeholder={language === "ar" ? "اختر التفاصيل" : "Select Detail"}
+                  language={language}
+                />
+              </FormField>
+            )}
             <FormField
               label={
                 language === "ar"
@@ -819,8 +929,15 @@ export default function MaintenanceTasksPage() {
                 <div className="mb-2 text-stone-gray text-sm font-medium">
                   {language === "ar" ? "نوع المشكلة" : "Issue Type"}
                 </div>
-                <div className="text-elegant-white mb-4">
-                  {selectedRequest.issueType}
+                <div className="flex flex-col mb-4">
+                  <span className="font-medium text-elegant-white">
+                    {issueTypes.find(i => i.value === selectedRequest.issueType)?.label[language] || selectedRequest.issueType}
+                  </span>
+                  {selectedRequest.subCategory && (
+                    <span className="text-xs text-stone-gray">
+                      {MOCK_SUB_CATEGORIES[selectedRequest.issueType as MaintenanceCategory]?.find(s => s.id === selectedRequest.subCategory)?.[language] || selectedRequest.subCategory}
+                    </span>
+                  )}
                 </div>
                 <div className="mb-2 text-stone-gray text-sm font-medium">
                   {language === "ar" ? "الوصف" : "Description"}
@@ -850,18 +967,24 @@ export default function MaintenanceTasksPage() {
                   {selectedRequest.attachment
                     ? selectedRequest.attachment
                     : language === "ar"
-                    ? "لا يوجد"
-                    : "None"}
+                      ? "لا يوجد"
+                      : "None"}
                 </div>
               </div>
               {/* Admin Panel */}
               <div>
                 <FormField label={language === "ar" ? "الحالة" : "Status"}>
                   <SelectContext
-                    options={statusOptions.filter((opt) => opt.value)}
+                    options={statusOptions.filter((opt) => opt.value !== 'all')}
                     value={selectedRequest.status}
-                    onChange={(value) =>
-                      setSelectedRequest({ ...selectedRequest, status: value })
+                    onChange={(value) => {
+                      if (value === 'closed') {
+                        handleRequestClose(selectedRequest);
+                      } else {
+                        setSelectedRequest({ ...selectedRequest, status: value as MaintenanceStatus })
+                        setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: value as MaintenanceStatus } : r));
+                      }
+                    }
                     }
                     placeholder={
                       language === "ar" ? "اختر الحالة" : "Select Status"
@@ -906,27 +1029,7 @@ export default function MaintenanceTasksPage() {
                     rows={3}
                   />
                 </FormField>
-                <FormField
-                  label={
-                    language === "ar" ? "تقرير الفني" : "Technician Report"
-                  }
-                >
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={(e) =>
-                      setSelectedRequest(
-                        selectedRequest
-                          ? {
-                              ...selectedRequest,
-                              report: e.target.files?.[0]?.name || "",
-                            }
-                          : selectedRequest
-                      )
-                    }
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-2 text-elegant-white mb-4 focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                  />
-                </FormField>
+
                 <div className="flex gap-4 mt-4">
                   <button
                     onClick={() => {
@@ -957,7 +1060,7 @@ export default function MaintenanceTasksPage() {
               </h3>
               <div className="bg-stone-gray/10 rounded-lg p-4 border border-desert-gold/20">
                 {selectedRequest.history &&
-                selectedRequest.history.length > 0 ? (
+                  selectedRequest.history.length > 0 ? (
                   <ul className="space-y-2">
                     {selectedRequest.history.map((h, i) => (
                       <li
@@ -979,6 +1082,42 @@ export default function MaintenanceTasksPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* OTP Verification Modal */}
+      <Modal
+        isOpen={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        title={language === 'ar' ? 'تأكيد إغلاق الطلب' : 'Confirm Request Closure'}
+        size="sm"
+      >
+        <div className="space-y-6 text-center">
+          <p className="text-stone-gray">
+            {language === 'ar'
+              ? 'الرجاء إدخال رمز التحقق المرسل إلى العميل لإغلاق الطلب نهائياً.'
+              : 'Please enter the verification code sent to the client to permanently close the request.'}
+          </p>
+          <div className="flex justify-center gap-3" dir="ltr">
+            {otp.map((digit, idx) => (
+              <input
+                key={idx}
+                type="text"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleOtpChange(idx, e.target.value)}
+                className="w-12 h-12 text-center text-xl font-bold bg-[#1A1A1A] border border-desert-gold/30 rounded-lg text-white focus:border-desert-gold focus:ring-1 focus:ring-desert-gold outline-none transition-all"
+              />
+            ))}
+          </div>
+          <div className="flex justify-center gap-4">
+            <Button onClick={() => setShowOtpModal(false)} variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button onClick={handleVerifyOtp} className="bg-green-600 hover:bg-green-700 text-white">
+              {language === 'ar' ? 'تحقق وإغلاق' : 'Verify & Close'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </PageWrapper>
   );

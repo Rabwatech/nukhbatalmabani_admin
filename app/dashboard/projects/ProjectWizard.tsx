@@ -11,10 +11,11 @@ import { toast } from "sonner";
 
 // Import step components
 import StepBasicInfo from "./wizard/StepBasicInfo";
+import StepLandPieces from "./wizard/StepLandPieces";
+import StepUnitModels from "./wizard/StepUnitModels";
 import StepMedia from "./wizard/StepMedia";
 import StepBuildings from "./wizard/StepBuildings";
 import StepUnits from "./wizard/StepUnits";
-import StepFeatures from "./wizard/StepFeatures";
 import StepAssociations from "./wizard/StepAssociations";
 import StepReview from "./wizard/StepReview";
 
@@ -25,15 +26,15 @@ import { ProjectWizardData, WizardStep } from "./wizard/types";
 import { useProjectWizardStore } from "./wizard/store";
 
 // Import validation schemas
-import { projectWizardSchema } from "./wizard/validation";
+import { projectWizardSchema, validateStep } from "./wizard/validation";
 
 const STEPS: WizardStep[] = [
   {
     id: 1,
     title: { ar: "المعلومات الأساسية", en: "Basic Information" },
     description: {
-      ar: "معلومات المشروع الأساسية",
-      en: "Project basic information",
+      ar: "معلومات المشروع الأساسية والمميزات",
+      en: "Project basic information and features",
     },
     component: StepBasicInfo,
     isCompleted: false,
@@ -41,6 +42,28 @@ const STEPS: WizardStep[] = [
   },
   {
     id: 2,
+    title: { ar: "قطع الأراضي", en: "Land Pieces" },
+    description: {
+      ar: "إدارة قطع الأراضي والصكوك",
+      en: "Manage land pieces and deeds",
+    },
+    component: StepLandPieces,
+    isCompleted: false,
+    isRequired: true,
+  },
+  {
+    id: 3,
+    title: { ar: "نماذج الوحدات", en: "Unit Models" },
+    description: {
+      ar: "تعريف نماذج الوحدات وتفاصيلها",
+      en: "Define unit models and details",
+    },
+    component: StepUnitModels,
+    isCompleted: false,
+    isRequired: true,
+  },
+  {
+    id: 4,
     title: { ar: "الوسائط والصور", en: "Media & Visual Content" },
     description: {
       ar: "رفع الصور والفيديوهات",
@@ -51,51 +74,40 @@ const STEPS: WizardStep[] = [
     isRequired: false,
   },
   {
-    id: 3,
+    id: 5,
     title: { ar: "تكوين المباني", en: "Buildings Configuration" },
     description: {
-      ar: "إعداد المباني والطوابق",
-      en: "Setup buildings and floors",
+      ar: "إعداد المباني وربطها بالأراضي",
+      en: "Setup buildings and link to lands",
     },
     component: StepBuildings,
     isCompleted: false,
     isRequired: true,
   },
   {
-    id: 4,
-    title: { ar: "إدارة الوحدات", en: "Unit Management" },
+    id: 6,
+    title: { ar: "إدارة الوحدات", en: "Unit Inventory" },
     description: {
-      ar: "تكوين الوحدات السكنية",
-      en: "Configure residential units",
+      ar: "إدارة مخزون الوحدات السكنية",
+      en: "Manage residential units inventory",
     },
     component: StepUnits,
     isCompleted: false,
     isRequired: true,
   },
   {
-    id: 5,
-    title: { ar: "المميزات والخدمات", en: "Features & Amenities" },
-    description: {
-      ar: "إضافة المميزات والخدمات",
-      en: "Add features and amenities",
-    },
-    component: StepFeatures,
-    isCompleted: false,
-    isRequired: false,
-  },
-  {
-    id: 6,
+    id: 7,
     title: { ar: "جمعيات الملاك", en: "Owners Associations" },
     description: {
-      ar: "إدارة جمعيات الملاك",
-      en: "Manage owners associations",
+      ar: "إدارة جمعية الملاك",
+      en: "Manage owners association",
     },
     component: StepAssociations,
     isCompleted: false,
     isRequired: false,
   },
   {
-    id: 7,
+    id: 8,
     title: { ar: "المراجعة والنشر", en: "Review & Publish" },
     description: {
       ar: "مراجعة المشروع ونشره",
@@ -142,20 +154,66 @@ export default function ProjectWizard() {
     return () => clearInterval(interval);
   }, [methods, saveDraft]);
 
-  // Load draft on mount
+  // Load draft on mount with robust migration logic
   useEffect(() => {
     const savedDraft = loadDraft();
     if (savedDraft) {
-      methods.reset(savedDraft);
+      // Create a base structure to ensure all required fields exist
+      const safeDraft = { ...savedDraft };
+
+      // Migration: Check if buildings is an array (legacy) and convert to object
+      if (Array.isArray(safeDraft.buildings)) {
+        safeDraft.buildings = { buildings: safeDraft.buildings };
+      } else if (!safeDraft.buildings) {
+        safeDraft.buildings = { buildings: [] };
+      } else if (!safeDraft.buildings.buildings) {
+        // Handle case where object exists but internal array is missing
+        safeDraft.buildings.buildings = [];
+      }
+
+      // Migration: Check if units is an array (legacy) and convert to object
+      if (Array.isArray(safeDraft.units)) {
+        safeDraft.units = { units: safeDraft.units };
+      } else if (!safeDraft.units) {
+        safeDraft.units = { units: [] };
+      } else if (!safeDraft.units.units) {
+        safeDraft.units.units = [];
+      }
+
+      // Ensure new arrays are initialized if undefined in draft
+      if (!Array.isArray(safeDraft.landPieces)) {
+        safeDraft.landPieces = [];
+      }
+
+      if (!Array.isArray(safeDraft.unitModels)) {
+        safeDraft.unitModels = [];
+      }
+
+      // Ensure associations object exists
+      if (!safeDraft.associations) {
+        safeDraft.associations = {
+          companyName: '',
+          crNumber: '',
+          headquarters: '',
+          ownerName: '',
+          ownerMobile: '',
+          ownerIdNumber: '',
+          attachments: {},
+        };
+      }
+
+      // Apply the sanitized draft to the form
+      methods.reset(safeDraft);
+
       toast.success(
         language === "ar"
-          ? "تم تحميل المسودة المحفوظة"
-          : "Draft loaded successfully"
+          ? "تم استعادة بيانات المشروع المحفوظة"
+          : "Saved project data restored"
       );
     }
   }, [loadDraft, methods, language]);
 
-  // Temporarily enable Next button for design testing
+  // Temporarily enable Next button to allow clicking and showing validation errors
   const isCurrentStepValid = true;
 
   // Handle step navigation
@@ -168,12 +226,18 @@ export default function ProjectWizard() {
       }
 
       // Validate current step before proceeding
-      if (!isCurrentStepValid) {
+      const currentData = methods.getValues();
+      try {
+        validateStep(currentStep, currentData);
+      } catch (error) {
+        console.error("Validation failed for step", currentStep, error);
         toast.error(
           language === "ar"
             ? "يرجى إكمال جميع الحقول المطلوبة"
             : "Please complete all required fields"
         );
+        // Trigger visual validation errors for the current step
+        await methods.trigger();
         return;
       }
 
@@ -183,7 +247,7 @@ export default function ProjectWizard() {
 
       setCurrentStep(stepNumber);
     },
-    [currentStep, methods, updateProjectData, language, isCurrentStepValid]
+    [currentStep, methods, updateProjectData, language]
   );
 
   // Handle form submission
@@ -271,7 +335,7 @@ export default function ProjectWizard() {
                 <p className="text-xs text-elegant-white/60">
                   {
                     STEPS.find((step) => step.id === currentStep)?.title[
-                      language
+                    language
                     ]
                   }
                 </p>
@@ -303,11 +367,10 @@ export default function ProjectWizard() {
               {STEPS.map((step, index) => (
                 <div
                   key={step.id}
-                  className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
-                    step.id <= currentStep
-                      ? "bg-desert-gold border-desert-gold shadow-md"
-                      : "bg-obsidian border-stone-gray/40"
-                  }`}
+                  className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${step.id <= currentStep
+                    ? "bg-desert-gold border-desert-gold shadow-md"
+                    : "bg-obsidian border-stone-gray/40"
+                    }`}
                   style={{ left: `${(index / (STEPS.length - 1)) * 100}%` }}
                 />
               ))}
@@ -325,34 +388,18 @@ export default function ProjectWizard() {
                   onClick={() => goToStep(step.id)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`group relative flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 min-w-[120px] ${
-                    currentStep === step.id
-                      ? "bg-desert-gold text-obsidian shadow-lg shadow-desert-gold/25"
-                      : step.isCompleted
-                      ? "bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30"
-                      : "text-elegant-white/70 hover:text-elegant-white hover:bg-stone-gray/20 border border-transparent hover:border-stone-gray/30"
-                  }`}
+                  className={`group relative flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 min-w-[120px] ${currentStep === step.id
+                    ? "bg-desert-gold text-obsidian shadow-lg shadow-desert-gold/25"
+                    : "text-elegant-white/70 hover:text-elegant-white hover:bg-stone-gray/20 border border-transparent hover:border-stone-gray/30"
+                    }`}
                 >
                   <div
-                    className={`relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-                      currentStep === step.id
-                        ? "bg-obsidian text-desert-gold shadow-md"
-                        : step.isCompleted
-                        ? "bg-green-600 text-white"
-                        : "bg-stone-gray/30 text-elegant-white/60 group-hover:bg-stone-gray/40"
-                    }`}
+                    className={`relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${currentStep === step.id
+                      ? "bg-obsidian text-desert-gold shadow-md"
+                      : "bg-stone-gray/30 text-elegant-white/60 group-hover:bg-stone-gray/40"
+                      }`}
                   >
-                    {step.isCompleted ? (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.1 }}
-                      >
-                        ✓
-                      </motion.div>
-                    ) : (
-                      step.id
-                    )}
+                    {step.id}
                     {currentStep === step.id && (
                       <motion.div
                         className="absolute inset-0 rounded-full border-2 border-desert-gold/30"
@@ -362,16 +409,13 @@ export default function ProjectWizard() {
                       />
                     )}
                   </div>
-                  <div className="flex-1 text-left">
+                  <div className="flex-1 text-left hidden md:block">
                     <span className="block text-sm font-medium">
                       {step.title[language]}
                     </span>
-                    <span className="block text-xs opacity-70">
-                      {step.description[language]}
-                    </span>
                   </div>
                   {step.isRequired && (
-                    <div className="w-2 h-2 rounded-full bg-red-400 opacity-60" />
+                    <div className="w-2 h-2 rounded-full bg-red-400 opacity-60 absolute top-2 right-2" />
                   )}
                 </motion.button>
               ))}
@@ -393,11 +437,10 @@ export default function ProjectWizard() {
                 onClick={() => setShowPreview(!showPreview)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`group flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border ${
-                  showPreview
-                    ? "bg-desert-gold/20 text-desert-gold border-desert-gold/30 hover:bg-desert-gold/30"
-                    : "text-elegant-white/80 hover:text-elegant-white bg-stone-gray/20 hover:bg-stone-gray/30 border-stone-gray/30 hover:border-stone-gray/50"
-                }`}
+                className={`group flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-xl border ${showPreview
+                  ? "bg-desert-gold/20 text-desert-gold border-desert-gold/30 hover:bg-desert-gold/30"
+                  : "text-elegant-white/80 hover:text-elegant-white bg-stone-gray/20 hover:bg-stone-gray/30 border-stone-gray/30 hover:border-stone-gray/50"
+                  }`}
               >
                 {showPreview ? (
                   <EyeOff className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -410,8 +453,8 @@ export default function ProjectWizard() {
                       ? "إخفاء المعاينة"
                       : "Hide Preview"
                     : language === "ar"
-                    ? "معاينة"
-                    : "Preview"}
+                      ? "معاينة"
+                      : "Preview"}
                 </span>
               </motion.button>
             </div>
@@ -433,7 +476,7 @@ export default function ProjectWizard() {
                   <h2 className="text-xl font-bold text-elegant-white">
                     {
                       STEPS.find((step) => step.id === currentStep)?.title[
-                        language
+                      language
                       ]
                     }
                   </h2>
@@ -481,16 +524,14 @@ export default function ProjectWizard() {
                 disabled={currentStep === 1}
                 whileHover={currentStep !== 1 ? { scale: 1.02 } : {}}
                 whileTap={currentStep !== 1 ? { scale: 0.98 } : {}}
-                className={`group flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                  currentStep === 1
-                    ? "bg-stone-gray/10 text-elegant-white/30 cursor-not-allowed"
-                    : "bg-stone-gray/20 text-elegant-white hover:bg-stone-gray/30 hover:text-elegant-white border border-stone-gray/30 hover:border-stone-gray/50"
-                }`}
+                className={`group flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${currentStep === 1
+                  ? "bg-stone-gray/10 text-elegant-white/30 cursor-not-allowed"
+                  : "bg-stone-gray/20 text-elegant-white hover:bg-stone-gray/30 hover:text-elegant-white border border-stone-gray/30 hover:border-stone-gray/50"
+                  }`}
               >
                 <ChevronLeft
-                  className={`w-5 h-5 transition-transform ${
-                    currentStep !== 1 ? "group-hover:-translate-x-1" : ""
-                  }`}
+                  className={`w-5 h-5 transition-transform ${currentStep !== 1 ? "group-hover:-translate-x-1" : ""
+                    }`}
                 />
                 <span className="font-semibold">
                   {language === "ar" ? "السابق" : "Previous"}
@@ -504,17 +545,15 @@ export default function ProjectWizard() {
                     disabled={!isCurrentStepValid}
                     whileHover={isCurrentStepValid ? { scale: 1.02 } : {}}
                     whileTap={isCurrentStepValid ? { scale: 0.98 } : {}}
-                    className={`group flex items-center gap-3 px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                      isCurrentStepValid
-                        ? "bg-gradient-to-r from-desert-gold to-warm-sand text-obsidian hover:shadow-lg hover:shadow-desert-gold/25 border border-desert-gold/30"
-                        : "bg-stone-gray/10 text-elegant-white/30 cursor-not-allowed"
-                    }`}
+                    className={`group flex items-center gap-3 px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${isCurrentStepValid
+                      ? "bg-gradient-to-r from-desert-gold to-warm-sand text-obsidian hover:shadow-lg hover:shadow-desert-gold/25 border border-desert-gold/30"
+                      : "bg-stone-gray/10 text-elegant-white/30 cursor-not-allowed"
+                      }`}
                   >
                     <span>{language === "ar" ? "التالي" : "Next"}</span>
                     <ChevronRight
-                      className={`w-5 h-5 transition-transform ${
-                        isCurrentStepValid ? "group-hover:translate-x-1" : ""
-                      }`}
+                      className={`w-5 h-5 transition-transform ${isCurrentStepValid ? "group-hover:translate-x-1" : ""
+                        }`}
                     />
                   </motion.button>
                 ) : (
@@ -527,11 +566,10 @@ export default function ProjectWizard() {
                     whileTap={
                       !isSubmitting && isCurrentStepValid ? { scale: 0.98 } : {}
                     }
-                    className={`group flex items-center gap-3 px-8 py-4 rounded-xl font-bold transition-all duration-300 ${
-                      isSubmitting || !isCurrentStepValid
-                        ? "bg-stone-gray/10 text-elegant-white/30 cursor-not-allowed"
-                        : "bg-gradient-to-r from-green-600 to-green-500 text-white hover:shadow-lg hover:shadow-green-600/25 border border-green-500/30"
-                    }`}
+                    className={`group flex items-center gap-3 px-8 py-4 rounded-xl font-bold transition-all duration-300 ${isSubmitting || !isCurrentStepValid
+                      ? "bg-stone-gray/10 text-elegant-white/30 cursor-not-allowed"
+                      : "bg-gradient-to-r from-green-600 to-green-500 text-white hover:shadow-lg hover:shadow-green-600/25 border border-green-500/30"
+                      }`}
                   >
                     {isSubmitting ? (
                       <>
@@ -691,18 +729,6 @@ const ProjectPreviewContent = ({
               value={data.basicInfo.name?.en}
             />
             <PreviewField
-              label={
-                language === "ar" ? "الوصف (عربي)" : "Description (Arabic)"
-              }
-              value={data.basicInfo.description?.ar}
-            />
-            <PreviewField
-              label={
-                language === "ar" ? "الوصف (إنجليزي)" : "Description (English)"
-              }
-              value={data.basicInfo.description?.en}
-            />
-            <PreviewField
               label={language === "ar" ? "المدينة" : "City"}
               value={data.basicInfo.city}
             />
@@ -710,25 +736,33 @@ const ProjectPreviewContent = ({
               label={language === "ar" ? "الحي" : "District"}
               value={data.basicInfo.district}
             />
+          </div>
+        </PreviewSection>
+      )}
+
+      {/* Land Pieces */}
+      {data.landPieces && (
+        <PreviewSection
+          title={language === "ar" ? "قطع الأراضي" : "Land Pieces"}
+        >
+          <div className="space-y-2">
             <PreviewField
-              label={language === "ar" ? "العنوان" : "Address"}
-              value={data.basicInfo.address}
+              label={language === "ar" ? "عدد القطع" : "Pieces Count"}
+              value={data.landPieces.length}
             />
+          </div>
+        </PreviewSection>
+      )}
+
+      {/* Unit Models */}
+      {data.unitModels && (
+        <PreviewSection
+          title={language === "ar" ? "نماذج الوحدات" : "Unit Models"}
+        >
+          <div className="space-y-2">
             <PreviewField
-              label={language === "ar" ? "المطور" : "Developer"}
-              value={data.basicInfo.developer}
-            />
-            <PreviewField
-              label={language === "ar" ? "رقم الترخيص" : "License Number"}
-              value={data.basicInfo.licenseNumber}
-            />
-            <PreviewField
-              label={language === "ar" ? "نوع المشروع" : "Project Type"}
-              value={data.basicInfo.projectType}
-            />
-            <PreviewField
-              label={language === "ar" ? "الحالة" : "Status"}
-              value={data.basicInfo.status}
+              label={language === "ar" ? "عدد النماذج" : "Models Count"}
+              value={data.unitModels.length}
             />
           </div>
         </PreviewSection>
@@ -751,37 +785,6 @@ const ProjectPreviewContent = ({
                 {language === "ar" ? "صورة" : "images"}
               </span>
             </div>
-            <div>
-              <span className="text-sm font-medium text-elegant-white/70">
-                {language === "ar" ? "الفيديوهات:" : "Videos:"}
-              </span>
-              <span className="text-sm text-elegant-white ml-2">
-                {data.media.videos?.length || 0}{" "}
-                {language === "ar" ? "فيديو" : "videos"}
-              </span>
-            </div>
-            <PreviewField
-              label={language === "ar" ? "الجولة الافتراضية" : "Virtual Tour"}
-              value={data.media.virtualTour}
-            />
-            <div>
-              <span className="text-sm font-medium text-elegant-white/70">
-                {language === "ar" ? "المخططات:" : "Floor Plans:"}
-              </span>
-              <span className="text-sm text-elegant-white ml-2">
-                {data.media.floorPlans?.length || 0}{" "}
-                {language === "ar" ? "مخطط" : "plans"}
-              </span>
-            </div>
-            <div>
-              <span className="text-sm font-medium text-elegant-white/70">
-                {language === "ar" ? "الكتيبات:" : "Brochures:"}
-              </span>
-              <span className="text-sm text-elegant-white ml-2">
-                {data.media.brochures?.length || 0}{" "}
-                {language === "ar" ? "كتيب" : "brochures"}
-              </span>
-            </div>
           </div>
         </PreviewSection>
       )}
@@ -798,26 +801,6 @@ const ProjectPreviewContent = ({
               label={language === "ar" ? "عدد المباني" : "Number of Buildings"}
               value={data.buildings.buildings?.length || 0}
             />
-            <PreviewField
-              label={language === "ar" ? "إجمالي المساحة" : "Total Area"}
-              value={
-                data.basicInfo?.totalArea
-                  ? `${data.basicInfo.totalArea} ${
-                      language === "ar" ? "متر مربع" : "sqm"
-                    }`
-                  : undefined
-              }
-            />
-            <PreviewField
-              label={language === "ar" ? "مساحة الأرض" : "Land Area"}
-              value={
-                data.basicInfo?.landArea
-                  ? `${data.basicInfo.landArea} ${
-                      language === "ar" ? "متر مربع" : "sqm"
-                    }`
-                  : undefined
-              }
-            />
           </div>
         </PreviewSection>
       )}
@@ -825,36 +808,14 @@ const ProjectPreviewContent = ({
       {/* Units */}
       {data.units && (
         <PreviewSection
-          title={language === "ar" ? "إدارة الوحدات" : "Unit Management"}
-        >
-          <div className="space-y-2">
-            <PreviewField
-              label={language === "ar" ? "أنواع الوحدات" : "Unit Types"}
-              value={data.units.unitTypes?.length || 0}
-            />
-            <PreviewField
-              label={language === "ar" ? "إجمالي الوحدات" : "Total Units"}
-              value={data.units.unitTypes?.length || 0}
-            />
-          </div>
-        </PreviewSection>
-      )}
-
-      {/* Features */}
-      {data.features && (
-        <PreviewSection
           title={
-            language === "ar" ? "المميزات والخدمات" : "Features & Amenities"
+            language === "ar" ? "الوحدات" : "Units"
           }
         >
           <div className="space-y-2">
             <PreviewField
-              label={language === "ar" ? "وسائل الراحة" : "Amenities"}
-              value={data.features.amenities?.length || 0}
-            />
-            <PreviewField
-              label={language === "ar" ? "الخدمات" : "Services"}
-              value={data.features.services?.length || 0}
+              label={language === "ar" ? "عدد الوحدات" : "Number of Units"}
+              value={data.units.units?.length || 0}
             />
           </div>
         </PreviewSection>
@@ -863,54 +824,14 @@ const ProjectPreviewContent = ({
       {/* Associations */}
       {data.associations && (
         <PreviewSection
-          title={language === "ar" ? "جمعيات الملاك" : "Owners Associations"}
+          title={language === "ar" ? "جمعية الملاك" : "Owners Association"}
         >
-          <div className="space-y-2">
-            <PreviewField
-              label={
-                language === "ar"
-                  ? "جمعية الملاك مطلوبة"
-                  : "Owners Association Required"
-              }
-              value={
-                data.associations.ownersAssociation?.isRequired
-                  ? language === "ar"
-                    ? "نعم"
-                    : "Yes"
-                  : language === "ar"
-                  ? "لا"
-                  : "No"
-              }
-            />
-            <PreviewField
-              label={language === "ar" ? "الرسوم الشهرية" : "Monthly Fee"}
-              value={
-                data.associations.ownersAssociation?.monthlyFee
-                  ? `${data.associations.ownersAssociation.monthlyFee} ${data.associations.ownersAssociation.currency}`
-                  : undefined
-              }
-            />
-            <PreviewField
-              label={language === "ar" ? "شركة الإدارة" : "Management Company"}
-              value={data.associations.managementCompany?.name}
-            />
-          </div>
+          <PreviewField
+            label={language === "ar" ? "اسم الشركة" : "Company Name"}
+            value={data.associations.companyName}
+          />
         </PreviewSection>
       )}
-
-      {/* Raw Data Toggle (for developers) */}
-      <details className="bg-stone-gray/5 rounded-xl p-4 border border-stone-gray/10">
-        <summary className="text-sm font-medium text-elegant-white/70 cursor-pointer hover:text-elegant-white transition-colors">
-          {language === "ar"
-            ? "عرض البيانات الخام (للمطورين)"
-            : "Show Raw Data (for developers)"}
-        </summary>
-        <div className="mt-4 bg-obsidian/50 rounded-lg p-4">
-          <pre className="text-elegant-white text-xs overflow-auto whitespace-pre-wrap">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </div>
-      </details>
     </div>
   );
-};
+}

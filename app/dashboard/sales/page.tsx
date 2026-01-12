@@ -16,6 +16,10 @@ import {
   SelectContent,
   SelectItem
 } from '@/components/ui/select';
+import BookingWizard from './components/BookingWizard';
+import DiscountCodeModal from './components/DiscountCodeModal';
+import IfraghSimulation from './components/IfraghSimulation';
+import { DiscountCode } from '@/lib/types';
 
 export default function SalesPage() {
   const { language } = useDirection();
@@ -23,6 +27,15 @@ export default function SalesPage() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
+
+  // Discount Code State
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [editingDiscount, setEditingDiscount] = useState<DiscountCode | undefined>(undefined);
+  const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([
+    { id: 'd1', code: 'SUMMER24', type: 'percentage', value: 5, category: 'seasonal', validUntil: '2024-06-30', isActive: true, usedCount: 12 },
+    { id: 'd2', code: 'VIPCLIENT', type: 'fixed_amount', value: 20000, category: 'marketing', validUntil: '2024-12-31', isActive: true, usedCount: 5 },
+  ]);
+
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   // Mock data
@@ -272,7 +285,9 @@ export default function SalesPage() {
     { id: 'dashboard', label: language === 'ar' ? 'لوحة الحجوزات' : 'Booking Dashboard' },
     { id: 'bookings', label: language === 'ar' ? 'إدارة الحجوزات' : 'Booking Management' },
     { id: 'quotes', label: language === 'ar' ? 'العروض والأسعار' : 'Quotes & Pricing' },
-    { id: 'contracts', label: language === 'ar' ? 'العقود' : 'Contracts' }
+    { id: 'contracts', label: language === 'ar' ? 'العقود' : 'Contracts' },
+    { id: 'discounts', label: language === 'ar' ? 'أكواد الخصم' : 'Discount Codes' },
+    { id: 'ifragh', label: language === 'ar' ? 'أتمتة الإفراغ' : 'Ifragh Automation' }
   ];
 
   // Booking columns
@@ -304,9 +319,9 @@ export default function SalesPage() {
       key: 'status',
       label: language === 'ar' ? 'الحالة' : 'Status',
       render: (value: string) => (
-        <StatusBadge 
-          status={getBookingStatusLabel(value)} 
-          variant={getBookingStatusVariant(value)} 
+        <StatusBadge
+          status={getBookingStatusLabel(value)}
+          variant={getBookingStatusVariant(value)}
         />
       )
     },
@@ -366,9 +381,9 @@ export default function SalesPage() {
       key: 'status',
       label: language === 'ar' ? 'الحالة' : 'Status',
       render: (value: string) => (
-        <StatusBadge 
-          status={getQuoteStatusLabel(value)} 
-          variant={getQuoteStatusVariant(value)} 
+        <StatusBadge
+          status={getQuoteStatusLabel(value)}
+          variant={getQuoteStatusVariant(value)}
         />
       )
     },
@@ -419,9 +434,9 @@ export default function SalesPage() {
       key: 'status',
       label: language === 'ar' ? 'الحالة' : 'Status',
       render: (value: string) => (
-        <StatusBadge 
-          status={getContractStatusLabel(value)} 
-          variant={getContractStatusVariant(value)} 
+        <StatusBadge
+          status={getContractStatusLabel(value)}
+          variant={getContractStatusVariant(value)}
         />
       )
     },
@@ -449,6 +464,33 @@ export default function SalesPage() {
       console.log('Delete item:', item);
     }
   };
+
+  const handleSaveDiscount = (code: Partial<DiscountCode>) => {
+    if (editingDiscount) {
+      setDiscountCodes(prev => prev.map(d => d.id === editingDiscount.id ? { ...d, ...code } : d));
+    } else {
+      const newCode: DiscountCode = {
+        id: Date.now().toString(),
+        code: code.code!,
+        type: code.type!,
+        value: code.value!,
+        category: code.category!,
+        validUntil: code.validUntil!,
+        isActive: true,
+        usedCount: 0,
+        ...code
+      };
+      setDiscountCodes(prev => [...prev, newCode]);
+    }
+    setEditingDiscount(undefined);
+  };
+
+  const handleCreateBooking = (data: any) => {
+    console.log('Creating booking:', data);
+    // Add toast or logic here
+    setShowBookingModal(false);
+  };
+
 
   return (
     <PageWrapper>
@@ -481,11 +523,10 @@ export default function SalesPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? 'border-desert-gold text-desert-gold'
-                    : 'border-transparent text-stone-gray hover:text-elegant-white'
-                }`}
+                className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${activeTab === tab.id
+                  ? 'border-desert-gold text-desert-gold'
+                  : 'border-transparent text-stone-gray hover:text-elegant-white'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -516,13 +557,13 @@ export default function SalesPage() {
                           <h3 className="text-lg font-bold text-elegant-white">{unit.code}</h3>
                           <p className="text-stone-gray text-sm">{unit.type}</p>
                         </div>
-                        <StatusBadge 
-                          status={getUnitStatusLabel(unit.status)} 
-                          variant={getUnitStatusVariant(unit.status)} 
+                        <StatusBadge
+                          status={getUnitStatusLabel(unit.status)}
+                          variant={getUnitStatusVariant(unit.status)}
                           size="sm"
                         />
                       </div>
-                      
+
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
                           <Building2 className="h-4 w-4 text-desert-gold" />
@@ -599,9 +640,9 @@ export default function SalesPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <StatusBadge 
-                                status={getBookingStatusLabel(booking.status)} 
-                                variant={getBookingStatusVariant(booking.status)} 
+                              <StatusBadge
+                                status={getBookingStatusLabel(booking.status)}
+                                variant={getBookingStatusVariant(booking.status)}
                                 size="sm"
                               />
                             </td>
@@ -637,7 +678,7 @@ export default function SalesPage() {
                   <span>{language === 'ar' ? 'حجز جديد' : 'New Booking'}</span>
                 </motion.button>
               </div>
-              
+
               <DataTable
                 columns={bookingColumns}
                 data={bookings}
@@ -665,7 +706,7 @@ export default function SalesPage() {
                   <span>{language === 'ar' ? 'عرض جديد' : 'New Quote'}</span>
                 </motion.button>
               </div>
-              
+
               <DataTable
                 columns={quoteColumns}
                 data={quotes}
@@ -693,7 +734,7 @@ export default function SalesPage() {
                   <span>{language === 'ar' ? 'عقد جديد' : 'New Contract'}</span>
                 </motion.button>
               </div>
-              
+
               <DataTable
                 columns={contractColumns}
                 data={contracts}
@@ -710,7 +751,7 @@ export default function SalesPage() {
               <h2 className="text-xl font-bold text-elegant-white">
                 {language === 'ar' ? 'تذكيرات الدفع' : 'Payment Reminders'}
               </h2>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {paymentReminders.map((reminder, index) => (
                   <motion.div
@@ -725,15 +766,15 @@ export default function SalesPage() {
                         <h3 className="text-lg font-bold text-elegant-white">{reminder.customer}</h3>
                         <p className="text-stone-gray">{language === 'ar' ? 'الوحدة:' : 'Unit:'} {reminder.unit}</p>
                       </div>
-                      <StatusBadge 
-                        status={reminder.status === 'pending' ? 
-                          (language === 'ar' ? 'معلق' : 'Pending') : 
+                      <StatusBadge
+                        status={reminder.status === 'pending' ?
+                          (language === 'ar' ? 'معلق' : 'Pending') :
                           (language === 'ar' ? 'متأخر' : 'Late')
-                        } 
-                        variant={reminder.status === 'pending' ? 'warning' : 'error'} 
+                        }
+                        variant={reminder.status === 'pending' ? 'warning' : 'error'}
                       />
                     </div>
-                    
+
                     <div className="space-y-3 mb-4">
                       <div className="flex items-center space-x-2 rtl:space-x-reverse">
                         <DollarSign className="h-4 w-4 text-desert-gold" />
@@ -762,103 +803,25 @@ export default function SalesPage() {
               </div>
             </div>
           )}
+
+          {activeTab === 'ifragh' && (
+            <IfraghSimulation />
+          )}
         </div>
 
-        {/* New Booking Modal */}
-        <Modal
+        <BookingWizard
           isOpen={showBookingModal}
           onClose={() => setShowBookingModal(false)}
-          title={language === 'ar' ? 'حجز جديد' : 'New Booking'}
-          size="lg"
-        >
-          <form className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label={language === 'ar' ? 'العميل' : 'Customer'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
-                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                    <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Customer'} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
-                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                    <SelectItem value="1" className="bg-obsidian">{language === 'ar' ? 'أحمد العتيبي' : 'Ahmed Al-Otaibi'}</SelectItem>
-                    <SelectItem value="2" className="bg-obsidian">{language === 'ar' ? 'فاطمة الحربي' : 'Fatima Al-Harbi'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
+          onSubmit={handleCreateBooking}
+        />
 
-              <FormField label={language === 'ar' ? 'المشروع' : 'Project'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
-                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                    <SelectValue placeholder={language === 'ar' ? 'اختر المشروع' : 'Select Project'} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
-                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                    <SelectItem value="elegance" className="bg-obsidian">{language === 'ar' ? 'مجمع الأناقة' : 'Elegance Complex'}</SelectItem>
-                    <SelectItem value="trade" className="bg-obsidian">{language === 'ar' ? 'برج التجارة' : 'Trade Tower'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
+        <DiscountCodeModal
+          isOpen={showDiscountModal}
+          onClose={() => setShowDiscountModal(false)}
+          onSubmit={handleSaveDiscount}
+          initialData={editingDiscount}
+        />
 
-              <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
-                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                    <SelectValue placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
-                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                    <SelectItem value="a101" className="bg-obsidian">A101 - {language === 'ar' ? 'شقة 3 غرف' : '3BR Apartment'}</SelectItem>
-                    <SelectItem value="b205" className="bg-obsidian">B205 - {language === 'ar' ? 'مكتب تجاري' : 'Commercial Office'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              <FormField label={language === 'ar' ? 'خطة الدفع' : 'Payment Plan'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
-                  <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
-                    <SelectValue placeholder={language === 'ar' ? 'اختر خطة الدفع' : 'Select Payment Plan'} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-obsidian border border-desert-gold/20 rounded-lg">
-                    <SelectItem value="all" className="text-stone-gray">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
-                    <SelectItem value="cash" className="bg-obsidian">
-                      {language === 'ar' ? 'دفع كامل' : 'Full Payment'}
-                    </SelectItem>
-                    <SelectItem value="installments" className="bg-obsidian">
-                      {language === 'ar' ? 'أقساط' : 'Installments'}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
-            </div>
-
-            <FormField label={language === 'ar' ? 'ملاحظات' : 'Notes'}>
-              <textarea
-                rows={4}
-                className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300 resize-none"
-                placeholder={language === 'ar' ? 'أضف ملاحظات إضافية...' : 'Add additional notes...'}
-              />
-            </FormField>
-
-            <div className="flex justify-end space-x-4 rtl:space-x-reverse pt-6">
-              <motion.button
-                type="button"
-                onClick={() => setShowBookingModal(false)}
-                className="px-6 py-3 border border-desert-gold/20 text-stone-gray rounded-lg hover:bg-stone-gray/10 transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {language === 'ar' ? 'إلغاء' : 'Cancel'}
-              </motion.button>
-              <motion.button
-                type="submit"
-                className="px-6 py-3 bg-desert-gold text-deep-black rounded-lg font-medium hover:bg-warm-sand transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {language === 'ar' ? 'إنشاء الحجز' : 'Create Booking'}
-              </motion.button>
-            </div>
-          </form>
-        </Modal>
 
         {/* New Quote Modal */}
         <Modal
@@ -870,7 +833,7 @@ export default function SalesPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'العميل' : 'Customer'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
+                <Select onValueChange={(value) => { }} defaultValue="all">
                   <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
                     <SelectValue placeholder={language === 'ar' ? 'اختر العميل' : 'Select Customer'} />
                   </SelectTrigger>
@@ -887,7 +850,7 @@ export default function SalesPage() {
               </FormField>
 
               <FormField label={language === 'ar' ? 'الوحدة' : 'Unit'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
+                <Select onValueChange={(value) => { }} defaultValue="all">
                   <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
                     <SelectValue placeholder={language === 'ar' ? 'اختر الوحدة' : 'Select Unit'} />
                   </SelectTrigger>
@@ -963,7 +926,7 @@ export default function SalesPage() {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label={language === 'ar' ? 'الحجز المرتبط' : 'Related Booking'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
+                <Select onValueChange={(value) => { }} defaultValue="all">
                   <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
                     <SelectValue placeholder={language === 'ar' ? 'اختر الحجز' : 'Select Booking'} />
                   </SelectTrigger>
@@ -995,7 +958,7 @@ export default function SalesPage() {
               </FormField>
 
               <FormField label={language === 'ar' ? 'حالة العقد' : 'Contract Status'} required>
-                <Select onValueChange={(value) => {}} defaultValue="all">
+                <Select onValueChange={(value) => { }} defaultValue="all">
                   <SelectTrigger className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none focus:border-desert-gold transition-colors duration-300">
                     <SelectValue placeholder={language === 'ar' ? 'اختر حالة العقد' : 'Select Contract Status'} />
                   </SelectTrigger>

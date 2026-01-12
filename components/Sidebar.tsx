@@ -61,10 +61,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       href: "/dashboard/projects",
     },
     {
-      id: "payments",
+      id: "finance",
       icon: CreditCard,
-      label: language === "ar" ? "المدفوعات" : "Payments",
-      href: "/dashboard/payments",
+      label: language === "ar" ? "الإدارة المالية" : "Financial Management",
+      href: "/dashboard/finance",
     },
     // {
     //   id: "support",
@@ -140,9 +140,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col ${
-          isRTL ? "lg:right-0" : "lg:left-0"
-        }`}
+        className={`hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col ${isRTL ? "lg:right-0" : "lg:left-0"
+          }`}
       >
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-obsidian/90 backdrop-blur-xl border-r border-desert-gold/20 px-6 pb-4">
           {/* Logo */}
@@ -175,31 +174,27 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                       >
                         <Link
                           href={item.href}
-                          className={`group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-medium transition-all duration-200 ${
-                            isActive
+                          className={`group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-medium transition-all duration-200 ${isActive
                               ? "bg-desert-gold text-deep-black shadow-lg"
                               : "text-stone-gray hover:text-elegant-white hover:bg-stone-gray/10"
-                          }`}
+                            }`}
                         >
                           <item.icon
-                            className={`h-5 w-5 shrink-0 transition-colors duration-200 ${
-                              isActive
+                            className={`h-5 w-5 shrink-0 transition-colors duration-200 ${isActive
                                 ? "text-deep-black"
                                 : "text-stone-gray group-hover:text-elegant-white"
-                            }`}
+                              }`}
                           />
                           {item.label}
                           {isActive && (
                             <motion.div
                               layoutId="activeIndicator"
-                              className={`ml-auto ${
-                                isRTL ? "mr-auto ml-0" : ""
-                              }`}
+                              className={`ml-auto ${isRTL ? "mr-auto ml-0" : ""
+                                }`}
                             >
                               <ChevronRight
-                                className={`h-4 w-4 text-deep-black ${
-                                  isRTL ? "rotate-180" : ""
-                                }`}
+                                className={`h-4 w-4 text-deep-black ${isRTL ? "rotate-180" : ""
+                                  }`}
                               />
                             </motion.div>
                           )}
@@ -222,9 +217,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             animate="open"
             exit="closed"
             variants={sidebarVariants}
-            className={`fixed inset-y-0 z-50 flex w-72 flex-col lg:hidden ${
-              isRTL ? "right-0" : "left-0"
-            }`}
+            className={`fixed inset-y-0 z-50 flex w-72 flex-col lg:hidden ${isRTL ? "right-0" : "left-0"
+              }`}
           >
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-obsidian/95 backdrop-blur-xl border-r border-desert-gold/20 px-6 pb-4">
               {/* Mobile Header */}
@@ -265,18 +259,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             <Link
                               href={item.href}
                               onClick={onClose}
-                              className={`group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-medium transition-all duration-200 ${
-                                isActive
+                              className={`group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-medium transition-all duration-200 ${isActive
                                   ? "bg-desert-gold text-deep-black shadow-lg"
                                   : "text-stone-gray hover:text-elegant-white hover:bg-stone-gray/10"
-                              }`}
+                                }`}
                             >
                               <item.icon
-                                className={`h-5 w-5 shrink-0 transition-colors duration-200 ${
-                                  isActive
+                                className={`h-5 w-5 shrink-0 transition-colors duration-200 ${isActive
                                     ? "text-deep-black"
                                     : "text-stone-gray group-hover:text-elegant-white"
-                                }`}
+                                  }`}
                               />
                               {item.label}
                             </Link>

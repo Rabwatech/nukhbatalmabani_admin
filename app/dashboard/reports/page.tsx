@@ -16,6 +16,7 @@ import {
   PieChart,
   FileText,
   Eye,
+  Brain,
 } from "lucide-react";
 import PageWrapper from "@/components/PageWrapper";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -165,10 +166,41 @@ export default function ReportsPage() {
     },
   ];
 
+  const aiInsights = [
+    {
+      id: 1,
+      type: "opportunity",
+      text: language === "ar"
+        ? "تشير البيانات إلى ارتفاع الطلب على وحدات 'الميزانين' في حي الملقا بنسبة 20% هذا الشهر."
+        : "Data indicates a 20% increase in demand for 'Mezzanine' units in Al-Malqa this month.",
+      score: 95
+    },
+    {
+      id: 2,
+      type: "risk",
+      text: language === "ar"
+        ? "معدل الإغلاق في مشروع 'الرابية' انخفض قليلاً. يُنصح بتقديم عروض ترويجية."
+        : "Closing rate in 'Al-Rabia' project dipped slightly. Promotional offers are recommended.",
+      score: 80
+    },
+    {
+      id: 3,
+      type: "performance",
+      text: language === "ar"
+        ? "فريق المبيعات حقق 110% من المستهدف الربعي قبل أسبوعين من الإغلاق."
+        : "Sales team achieved 110% of quarterly target two weeks before closing.",
+      score: 98
+    }
+  ];
+
   const tabs = [
     {
       id: "sales",
       label: language === "ar" ? "تقارير المبيعات" : "Sales Reports",
+    },
+    {
+      id: "ai",
+      label: language === "ar" ? "التحليل الذكي (AI)" : "AI Insights",
     },
     {
       id: "payments",
@@ -361,11 +393,10 @@ export default function ReportsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? "border-desert-gold text-desert-gold"
-                    : "border-transparent text-stone-gray hover:text-elegant-white"
-                }`}
+                className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${activeTab === tab.id
+                  ? "border-desert-gold text-desert-gold"
+                  : "border-transparent text-stone-gray hover:text-elegant-white"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -758,6 +789,58 @@ export default function ReportsPage() {
             </div>
           )}
 
+
+
+          {activeTab === "ai" && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-obsidian to-deep-black border border-desert-gold/30 rounded-2xl p-6 min-h-[400px]">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-desert-gold/20 flex items-center justify-center animate-pulse">
+                    <Brain className="w-6 h-6 text-desert-gold" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      {language === "ar" ? "تحليلات الذكاء الاصطناعي" : "AI Smart Insights"}
+                    </h2>
+                    <p className="text-stone-gray text-sm">
+                      {language === "ar" ? "توصيات وفرص بناءً على البيانات الحية" : "Recommendations based on live data"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {aiInsights.map((insight) => (
+                    <motion.div
+                      key={insight.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-stone-gray/10 border border-white/5 rounded-xl p-4 hover:border-desert-gold/30 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${insight.type === 'opportunity' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' :
+                          insight.type === 'risk' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-500'
+                          }`} />
+                        <div>
+                          <p className="text-elegant-white text-lg leading-relaxed">{insight.text}</p>
+                          <div className="flex items-center gap-2 mt-3">
+                            <span className="text-xs text-stone-gray font-mono px-2 py-1 rounded bg-black/30 border border-white/10">
+                              {language === "ar" ? "درجة الثقة:" : "Confidence:"} {insight.score}%
+                            </span>
+                            {insight.type === 'opportunity' && (
+                              <span className="text-xs text-green-400 flex items-center gap-1">
+                                <TrendingUp className="w-3 h-3" /> {language === "ar" ? "فرصة عالية" : "High Opportunity"}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "tasks" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
@@ -936,7 +1019,7 @@ export default function ReportsPage() {
                   },
                 ]}
                 value={""}
-                onChange={() => {}}
+                onChange={() => { }}
                 placeholder={
                   language === "ar" ? "اختر المشروع" : "Select Project"
                 }
@@ -965,7 +1048,7 @@ export default function ReportsPage() {
                   },
                 ]}
                 value={""}
-                onChange={() => {}}
+                onChange={() => { }}
                 placeholder={
                   language === "ar" ? "اختر المندوب" : "Select Representative"
                 }
@@ -995,6 +1078,6 @@ export default function ReportsPage() {
           </form>
         </Modal>
       </div>
-    </PageWrapper>
+    </PageWrapper >
   );
 }

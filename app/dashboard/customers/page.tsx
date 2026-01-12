@@ -59,6 +59,7 @@ export default function CustomersPage() {
   const customers = [
     {
       id: "CUST-1001",
+      accountNumber: "ACC-2024-001",
       name: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
       nameEn: "Ahmed Al-Otaibi",
       phone: "+966 50 123 4567",
@@ -66,10 +67,12 @@ export default function CustomersPage() {
       status: "interested",
       units: 0,
       nationalId: "1234567890",
+      absherMobile: "0501234567",
       occupation: language === "ar" ? "مهندس" : "Engineer",
       nationality: language === "ar" ? "سعودي" : "Saudi",
       createdDate: "2024-01-15",
       assignedTo: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
+      accessMethod: "social_media",
       address:
         language === "ar"
           ? "الرياض، حي الملقا، شارع الأمير سعود"
@@ -84,15 +87,6 @@ export default function CustomersPage() {
               : "Initial call to discuss interests",
           staff: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
         },
-        {
-          type: "meeting",
-          date: "2024-01-20",
-          notes:
-            language === "ar"
-              ? "زيارة للمكتب لمشاهدة النماذج"
-              : "Office visit to see models",
-          staff: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
-        },
       ],
       documents: [],
       notes:
@@ -102,6 +96,7 @@ export default function CustomersPage() {
     },
     {
       id: "CUST-1002",
+      accountNumber: "ACC-2024-002",
       name: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
       nameEn: "Fatima Al-Harbi",
       phone: "+966 50 987 6543",
@@ -109,27 +104,17 @@ export default function CustomersPage() {
       status: "booked",
       units: 1,
       nationalId: "0987654321",
+      absherMobile: "0509876543",
       occupation: language === "ar" ? "طبيبة" : "Doctor",
       nationality: language === "ar" ? "سعودية" : "Saudi",
       createdDate: "2024-01-10",
       assignedTo: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
+      accessMethod: "website",
       address:
         language === "ar"
           ? "جدة، حي الشاطئ، شارع الأمير فيصل"
           : "Jeddah, Al-Shati District, Prince Faisal St.",
       interactions: [
-        {
-          type: "call",
-          date: "2024-01-10",
-          notes: language === "ar" ? "اتصال أولي" : "Initial call",
-          staff: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
-        },
-        {
-          type: "meeting",
-          date: "2024-01-12",
-          notes: language === "ar" ? "زيارة للموقع" : "Site visit",
-          staff: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
-        },
         {
           type: "booking",
           date: "2024-01-18",
@@ -137,80 +122,38 @@ export default function CustomersPage() {
           staff: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
         },
       ],
-      documents: [
-        {
-          name: language === "ar" ? "استمارة الحجز" : "Booking Form",
-          date: "2024-01-18",
-          type: "pdf",
-        },
-      ],
-      notes:
-        language === "ar"
-          ? "تفضل الطابق العلوي مع إطلالة"
-          : "Prefers upper floor with a view",
+      documents: [],
+      notes: "",
     },
     {
       id: "CUST-1003",
+      accountNumber: "ACC-2024-003",
       name: language === "ar" ? "خالد المطيري" : "Khalid Al-Mutairi",
       nameEn: "Khalid Al-Mutairi",
       phone: "+966 55 123 4567",
       email: "khalid@example.com",
-      status: "contracted",
+      status: "owner", // Changed from contracted to owner as per new flow
       units: 1,
       nationalId: "5678901234",
+      absherMobile: "0551234567",
       occupation: language === "ar" ? "رجل أعمال" : "Businessman",
       nationality: language === "ar" ? "سعودي" : "Saudi",
       createdDate: "2023-12-05",
       assignedTo: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
+      accessMethod: "recommendation",
+      recommenderName: "Saud Al-Saud",
+      recommenderPhone: "0500000000",
       address:
         language === "ar"
           ? "الرياض، حي العليا، شارع العروبة"
           : "Riyadh, Olaya District, Al-Urubah Rd.",
-      interactions: [
-        {
-          type: "call",
-          date: "2023-12-05",
-          notes: language === "ar" ? "اتصال أولي" : "Initial call",
-          staff: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
-        },
-        {
-          type: "meeting",
-          date: "2023-12-10",
-          notes: language === "ar" ? "زيارة للموقع" : "Site visit",
-          staff: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
-        },
-        {
-          type: "booking",
-          date: "2023-12-15",
-          notes: language === "ar" ? "حجز الوحدة V15" : "Booked unit V15",
-          staff: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
-        },
-        {
-          type: "contract",
-          date: "2023-12-20",
-          notes: language === "ar" ? "توقيع العقد" : "Contract signed",
-          staff: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
-        },
-      ],
-      documents: [
-        {
-          name: language === "ar" ? "استمارة الحجز" : "Booking Form",
-          date: "2023-12-15",
-          type: "pdf",
-        },
-        {
-          name: language === "ar" ? "العقد" : "Contract",
-          date: "2023-12-20",
-          type: "pdf",
-        },
-      ],
-      notes:
-        language === "ar"
-          ? "يفضل التواصل عبر الواتساب"
-          : "Prefers WhatsApp communication",
+      interactions: [],
+      documents: [],
+      notes: "",
     },
     {
       id: "CUST-1004",
+      accountNumber: "ACC-2024-004",
       name: language === "ar" ? "نورا السالم" : "Nora Al-Salem",
       nameEn: "Nora Al-Salem",
       phone: "+966 55 987 6543",
@@ -218,70 +161,19 @@ export default function CustomersPage() {
       status: "owner",
       units: 2,
       nationalId: "9876543210",
+      absherMobile: "0559876543",
       occupation: language === "ar" ? "مستثمرة" : "Investor",
       nationality: language === "ar" ? "سعودية" : "Saudi",
       createdDate: "2023-11-01",
       assignedTo: language === "ar" ? "خالد المطيري" : "Khalid Al-Mutairi",
+      accessMethod: "field_visit",
       address:
         language === "ar"
           ? "الدمام، حي الشاطئ، شارع الخليج"
           : "Dammam, Al-Shati District, Gulf St.",
-      interactions: [
-        {
-          type: "call",
-          date: "2023-11-01",
-          notes: language === "ar" ? "اتصال أولي" : "Initial call",
-          staff: language === "ar" ? "خالد المطيري" : "Khalid Al-Mutairi",
-        },
-        {
-          type: "meeting",
-          date: "2023-11-05",
-          notes: language === "ar" ? "زيارة للموقع" : "Site visit",
-          staff: language === "ar" ? "خالد المطيري" : "Khalid Al-Mutairi",
-        },
-        {
-          type: "booking",
-          date: "2023-11-10",
-          notes:
-            language === "ar"
-              ? "حجز الوحدتين C302 و C303"
-              : "Booked units C302 and C303",
-          staff: language === "ar" ? "خالد المطيري" : "Khalid Al-Mutairi",
-        },
-        {
-          type: "contract",
-          date: "2023-11-15",
-          notes: language === "ar" ? "توقيع العقد" : "Contract signed",
-          staff: language === "ar" ? "أحمد العتيبي" : "Ahmed Al-Otaibi",
-        },
-        {
-          type: "handover",
-          date: "2023-12-01",
-          notes: language === "ar" ? "تسليم المفاتيح" : "Keys handover",
-          staff: language === "ar" ? "فاطمة الحربي" : "Fatima Al-Harbi",
-        },
-      ],
-      documents: [
-        {
-          name: language === "ar" ? "استمارة الحجز" : "Booking Form",
-          date: "2023-11-10",
-          type: "pdf",
-        },
-        {
-          name: language === "ar" ? "العقد" : "Contract",
-          date: "2023-11-15",
-          type: "pdf",
-        },
-        {
-          name: language === "ar" ? "محضر التسليم" : "Handover Report",
-          date: "2023-12-01",
-          type: "pdf",
-        },
-      ],
-      notes:
-        language === "ar"
-          ? "مستثمرة تبحث عن فرص إضافية"
-          : "Investor looking for additional opportunities",
+      interactions: [],
+      documents: [],
+      notes: "VIP",
     },
   ];
 
@@ -364,8 +256,6 @@ export default function CustomersPage() {
         return "interested";
       case "booked":
         return "booked";
-      case "contracted":
-        return "contracted";
       case "owner":
         return "owner";
       default:
@@ -377,7 +267,6 @@ export default function CustomersPage() {
     const labels: Record<string, { ar: string; en: string }> = {
       interested: { ar: "مهتم", en: "Interested" },
       booked: { ar: "محجوز", en: "Booked" },
-      contracted: { ar: "موقّع", en: "Contracted" },
       owner: { ar: "مالك", en: "Owner" },
     };
     return labels[status]?.[language] || status;
@@ -389,10 +278,8 @@ export default function CustomersPage() {
         return "info";
       case "booked":
         return "warning";
-      case "contracted":
-        return "success";
       case "owner":
-        return "default";
+        return "success"; // Owner is the final success state
       default:
         return "default";
     }
@@ -768,11 +655,10 @@ export default function CustomersPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? "border-desert-gold text-desert-gold"
-                    : "border-transparent text-stone-gray hover:text-elegant-white"
-                }`}
+                className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${activeTab === tab.id
+                  ? "border-desert-gold text-desert-gold"
+                  : "border-transparent text-stone-gray hover:text-elegant-white"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -804,8 +690,8 @@ export default function CustomersPage() {
                 ? "تعديل بيانات العميل"
                 : "Edit Customer"
               : language === "ar"
-              ? "إضافة عميل جديد"
-              : "Add New Customer"
+                ? "إضافة عميل جديد"
+                : "Add New Customer"
           }
           size="xl"
         >
@@ -817,6 +703,23 @@ export default function CustomersPage() {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Account Number (Auto-generated) */}
+                <FormField
+                  label={language === "ar" ? "رقم الحساب" : "Account Number"}
+                >
+                  <input
+                    type="text"
+                    value={
+                      selectedCustomer?.accountNumber ||
+                      (selectedCustomer
+                        ? "ACC-" + selectedCustomer.id.split("-")[1]
+                        : "ACC-" + newCustomerId.split("-")[1])
+                    }
+                    readOnly
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-stone-gray focus:outline-none transition-colors duration-300 cursor-not-allowed"
+                  />
+                </FormField>
+
                 {/* Customer ID */}
                 <FormField
                   label={language === "ar" ? "رقم العميل" : "Customer ID"}
@@ -842,11 +745,7 @@ export default function CustomersPage() {
                     type="text"
                     defaultValue={selectedCustomer?.name || ""}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "أدخل الاسم بالعربية"
-                        : "Enter name in Arabic"
-                    }
+                    placeholder={language === "ar" ? "الاسم" : "Name"}
                   />
                 </FormField>
 
@@ -863,38 +762,61 @@ export default function CustomersPage() {
                     type="text"
                     defaultValue={selectedCustomer?.nameEn || ""}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "أدخل الاسم بالإنجليزية"
-                        : "Enter name in English"
-                    }
+                    placeholder="Name in English"
                   />
                 </FormField>
 
-                {/* Absher ID */}
+                {/* Mobile Number (Duplicate Check) */}
                 <FormField
-                  label={language === "ar" ? "رقم الهوية (أبشر)" : "Absher ID"}
+                  label={language === "ar" ? "رقم الجوال" : "Mobile Number"}
                   required
-                  error={
-                    selectedCustomer?.nationalId &&
-                    !validateAbsherId(selectedCustomer.nationalId)
-                      ? language === "ar"
-                        ? "يجب أن يتكون من 10 أرقام فقط"
-                        : "Must be 10 digits only"
-                      : undefined
+                >
+                  <input
+                    type="tel"
+                    defaultValue={selectedCustomer?.phone || ""}
+                    onBlur={(e) => {
+                      const val = e.target.value;
+                      if (
+                        !selectedCustomer &&
+                        customers.some((c) => c.phone === val)
+                      ) {
+                        alert(
+                          language === "ar"
+                            ? "هذا الرقم مسجل مسبقاً!"
+                            : "This number is already registered!"
+                        );
+                      }
+                    }}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder="+966 5..."
+                  />
+                </FormField>
+
+                {/* Absher Mobile */}
+                <FormField
+                  label={
+                    language === "ar" ? "رقم جوال أبشر" : "Absher Mobile"
                   }
+                  required
+                >
+                  <input
+                    type="tel"
+                    defaultValue={selectedCustomer?.absherMobile || ""}
+                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                    placeholder="05..."
+                  />
+                </FormField>
+
+                {/* National ID */}
+                <FormField
+                  label={language === "ar" ? "رقم الهوية" : "National ID"}
+                  required
                 >
                   <input
                     type="text"
                     defaultValue={selectedCustomer?.nationalId || ""}
-                    pattern="[0-9]{10}"
-                    maxLength={10}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "أدخل رقم الهوية (10 أرقام)"
-                        : "Enter Absher ID (10 digits)"
-                    }
+                    placeholder="10xxxxxxxx"
                   />
                 </FormField>
 
@@ -907,21 +829,74 @@ export default function CustomersPage() {
                     type="text"
                     defaultValue={selectedCustomer?.nationality || ""}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar" ? "أدخل الجنسية" : "Enter nationality"
-                    }
                   />
                 </FormField>
 
                 {/* Occupation */}
                 <FormField label={language === "ar" ? "المهنة" : "Occupation"}>
-                  <input
-                    type="text"
-                    defaultValue={selectedCustomer?.occupation || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
+                  <SelectContext
+                    options={[
+                      {
+                        value: "civil",
+                        label: { ar: "قطاع مدني", en: "Civil Sector" },
+                      },
+                      {
+                        value: "military",
+                        label: { ar: "قطاع عسكري", en: "Military Sector" },
+                      },
+                      {
+                        value: "private",
+                        label: { ar: "قطاع خاص", en: "Private Sector" },
+                      },
+                      { value: "aramco", label: { ar: "أرامكو", en: "Aramco" } },
+                      { value: "other", label: { ar: "أخرى", en: "Other" } },
+                    ]}
+                    value={selectedCustomer?.occupation || ""}
+                    onChange={() => { }} // Handle state change to show upload if 'aramco'
                     placeholder={
-                      language === "ar" ? "أدخل المهنة" : "Enter occupation"
+                      language === "ar" ? "اختر المهنة" : "Select Occupation"
                     }
+                    language={language}
+                  />
+                  {/* Warning/Upload for Aramco would go here if we tracked state */}
+                </FormField>
+
+                {/* Method of Access */}
+                <FormField
+                  label={language === "ar" ? "طريقة الوصول" : "Access Method"}
+                  required
+                >
+                  <SelectContext
+                    options={[
+                      {
+                        value: "marketer",
+                        label: { ar: "مسوق خارجي", en: "External Marketer" },
+                      },
+                      {
+                        value: "social_media",
+                        label: { ar: "سوشيال ميديا", en: "Social Media" },
+                      },
+                      {
+                        value: "website",
+                        label: { ar: "الموقع الإلكتروني", en: "Website" },
+                      },
+                      {
+                        value: "ad_campaign",
+                        label: { ar: "حملة إعلانية", en: "Ad Campaign" },
+                      },
+                      {
+                        value: "field_visit",
+                        label: { ar: "نزول ميداني", en: "Field Visit" },
+                      },
+                      {
+                        value: "recommendation",
+                        label: { ar: "توصية", en: "Recommendation" },
+                      },
+                    ]}
+                    value={selectedCustomer?.accessMethod || ""}
+                    onChange={() => { }}
+                    placeholder={language === "ar" ? "اختر" : "Select"}
+                    language={language}
                   />
                 </FormField>
 
@@ -937,166 +912,58 @@ export default function CustomersPage() {
                         label: { ar: "مهتم", en: "Interested" },
                       },
                       { value: "booked", label: { ar: "محجوز", en: "Booked" } },
-                      {
-                        value: "contracted",
-                        label: { ar: "موقّع", en: "Contracted" },
-                      },
                       { value: "owner", label: { ar: "مالك", en: "Owner" } },
                     ]}
                     value={selectedCustomer?.status || "interested"}
-                    onChange={() => {}}
-                    placeholder={
-                      language === "ar" ? "اختر الحالة" : "Select Status"
-                    }
-                    language={language}
-                  />
-                </FormField>
-
-                {/* Assigned To */}
-                <FormField
-                  label={language === "ar" ? "المسؤول" : "Assigned To"}
-                  required
-                >
-                  <SelectContext
-                    options={[
-                      {
-                        value: "unassigned",
-                        label: { ar: "اختر الموظف", en: "Select Employee" },
-                      },
-                      {
-                        value:
-                          language === "ar"
-                            ? "فاطمة الحربي"
-                            : "Fatima Al-Harbi",
-                        label: { ar: "فاطمة الحربي", en: "Fatima Al-Harbi" },
-                      },
-                      {
-                        value:
-                          language === "ar"
-                            ? "أحمد العتيبي"
-                            : "Ahmed Al-Otaibi",
-                        label: { ar: "أحمد العتيبي", en: "Ahmed Al-Otaibi" },
-                      },
-                      {
-                        value:
-                          language === "ar"
-                            ? "خالد المطيري"
-                            : "Khalid Al-Mutairi",
-                        label: { ar: "خالد المطيري", en: "Khalid Al-Mutairi" },
-                      },
-                    ]}
-                    value={selectedCustomer?.assignedTo || ""}
-                    onChange={() => {}}
-                    placeholder={
-                      language === "ar" ? "اختر الموظف" : "Select Employee"
-                    }
-                    language={language}
-                  />
-                </FormField>
-
-                {/* Method of Access */}
-                <FormField
-                  label={
-                    language === "ar" ? "طريقة الوصول" : "Method of Access"
-                  }
-                  required
-                >
-                  <SelectContext
-                    options={[
-                      {
-                        value: "social_media",
-                        label: {
-                          ar: "وسائل التواصل الاجتماعي",
-                          en: "Social Media",
-                        },
-                      },
-                      {
-                        value: "website",
-                        label: { ar: "الموقع الإلكتروني", en: "Website" },
-                      },
-                      {
-                        value: "advertising_campaign",
-                        label: {
-                          ar: "حملة إعلانية",
-                          en: "Advertising Campaign",
-                        },
-                      },
-                      {
-                        value: "field_marketing",
-                        label: { ar: "تسويق ميداني", en: "Field Marketing" },
-                      },
-                      {
-                        value: "awareness",
-                        label: { ar: "توعية", en: "Awareness" },
-                      },
-                    ]}
-                    value={selectedCustomer?.methodOfAccess || ""}
-                    onChange={() => {}}
-                    placeholder={
-                      language === "ar"
-                        ? "اختر طريقة الوصول"
-                        : "Select Method of Access"
-                    }
+                    onChange={() => { }}
+                    placeholder={language === "ar" ? "اختر" : "Select"}
                     language={language}
                   />
                 </FormField>
               </div>
             </div>
 
-            {/* Contact Details Section */}
+            {/* Address & Proxy Section */}
             <div className="bg-stone-gray/10 rounded-lg p-6 border border-desert-gold/20">
               <h3 className="text-lg font-bold text-elegant-white mb-4">
-                {language === "ar" ? "معلومات الاتصال" : "Contact Details"}
+                {language === "ar" ? "بيانات إضافية" : "Additional Info"}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Phone Number */}
                 <FormField
-                  label={language === "ar" ? "رقم الهاتف" : "Phone Number"}
-                  required
-                >
-                  <input
-                    type="tel"
-                    defaultValue={selectedCustomer?.phone || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder="+966 5X XXX XXXX"
-                  />
-                </FormField>
-
-                {/* Email */}
-                <FormField
-                  label={language === "ar" ? "البريد الإلكتروني" : "Email"}
-                >
-                  <input
-                    type="email"
-                    defaultValue={selectedCustomer?.email || ""}
-                    className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder="example@email.com"
-                  />
-                </FormField>
-
-                {/* Residential Address */}
-                <FormField
-                  label={
-                    language === "ar" ? "العنوان السكني" : "Residential Address"
-                  }
+                  label={language === "ar" ? "العنوان السكني" : "Address"}
                   className="md:col-span-2"
                 >
                   <input
                     type="text"
                     defaultValue={selectedCustomer?.address || ""}
                     className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white placeholder-stone-gray focus:outline-none focus:border-desert-gold transition-colors duration-300"
-                    placeholder={
-                      language === "ar"
-                        ? "أدخل العنوان السكني الكامل"
-                        : "Enter full residential address"
-                    }
                   />
                 </FormField>
+
+                <div className="md:col-span-2 border-t border-desert-gold/10 pt-4 mt-2">
+                  <h4 className="text-md font-medium text-elegant-white mb-3">
+                    {language === "ar" ? "بيانات الوكيل (إن وجد)" : "Proxy Details (If any)"}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField label={language === "ar" ? "اسم الوكيل" : "Proxy Name"}>
+                      <input type="text" className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none" />
+                    </FormField>
+                    <FormField label={language === "ar" ? "رقم جوال الوكيل" : "Proxy Mobile"}>
+                      <input type="tel" className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none" />
+                    </FormField>
+                    <FormField label={language === "ar" ? "صلة القرابة" : "Relationship"}>
+                      <input type="text" className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none" />
+                    </FormField>
+                    <FormField label={language === "ar" ? "رقم الوكالة" : "Deed Number"}>
+                      <input type="text" className="w-full bg-stone-gray/10 border border-desert-gold/20 rounded-lg px-4 py-3 text-elegant-white focus:outline-none" />
+                    </FormField>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Purchase Interest Section */}
+            {/* Purchase Interest (Keep existing) */}
             <div className="bg-stone-gray/10 rounded-lg p-6 border border-desert-gold/20">
               <div
                 className="flex justify-between items-center cursor-pointer"
@@ -1116,7 +983,6 @@ export default function CustomersPage() {
                   )}
                 </button>
               </div>
-
               {isProjectInterestOpen && (
                 <div className="mt-4 space-y-6">
                   {/* Purchase Interest Type */}
@@ -1143,7 +1009,7 @@ export default function CustomersPage() {
                         },
                       ]}
                       value={selectedCustomer?.interestType || ""}
-                      onChange={() => {}}
+                      onChange={() => { }}
                       placeholder={
                         language === "ar"
                           ? "اختر نوع الاهتمام"
@@ -1182,8 +1048,8 @@ export default function CustomersPage() {
                           value={
                             selectedProject
                               ? projects.find(
-                                  (p) => p.id.toString() === selectedProject
-                                )?.name || ""
+                                (p) => p.id.toString() === selectedProject
+                              )?.name || ""
                               : ""
                           }
                           readOnly
@@ -1211,7 +1077,7 @@ export default function CustomersPage() {
                             },
                           ]}
                           value={""}
-                          onChange={() => {}}
+                          onChange={() => { }}
                           placeholder={
                             language === "ar"
                               ? "اختر المبنى"
@@ -1236,7 +1102,7 @@ export default function CustomersPage() {
                               })) || []
                           }
                           value={""}
-                          onChange={() => {}}
+                          onChange={() => { }}
                           placeholder={
                             language === "ar" ? "اختر الشقة" : "Select Flat"
                           }
@@ -1278,7 +1144,7 @@ export default function CustomersPage() {
                             },
                           ]}
                           value={""}
-                          onChange={() => {}}
+                          onChange={() => { }}
                           placeholder={
                             language === "ar"
                               ? "اختر عدد الغرف"
@@ -1297,8 +1163,8 @@ export default function CustomersPage() {
                           value={
                             selectedProject
                               ? projects.find(
-                                  (p) => p.id.toString() === selectedProject
-                                )?.units[0].paymentPlan || ""
+                                (p) => p.id.toString() === selectedProject
+                              )?.units[0].paymentPlan || ""
                               : ""
                           }
                           readOnly
@@ -1365,8 +1231,8 @@ export default function CustomersPage() {
                     ? "تحديث"
                     : "Update"
                   : language === "ar"
-                  ? "إضافة"
-                  : "Add"}
+                    ? "إضافة"
+                    : "Add"}
               </motion.button>
             </div>
           </form>
@@ -1388,11 +1254,10 @@ export default function CustomersPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveDetailTab(tab.id)}
-                      className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${
-                        activeDetailTab === tab.id
-                          ? "border-desert-gold text-desert-gold"
-                          : "border-transparent text-stone-gray hover:text-elegant-white"
-                      }`}
+                      className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 ${activeDetailTab === tab.id
+                        ? "border-desert-gold text-desert-gold"
+                        : "border-transparent text-stone-gray hover:text-elegant-white"
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -1526,39 +1391,38 @@ export default function CustomersPage() {
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center space-x-2 rtl:space-x-reverse">
                                 <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    interaction.type === "call"
-                                      ? "bg-blue-500/20 text-blue-400"
-                                      : interaction.type === "meeting"
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${interaction.type === "call"
+                                    ? "bg-blue-500/20 text-blue-400"
+                                    : interaction.type === "meeting"
                                       ? "bg-green-500/20 text-green-400"
                                       : interaction.type === "booking"
-                                      ? "bg-yellow-500/20 text-yellow-400"
-                                      : interaction.type === "contract"
-                                      ? "bg-purple-500/20 text-purple-400"
-                                      : "bg-stone-gray/20 text-stone-gray"
-                                  }`}
+                                        ? "bg-yellow-500/20 text-yellow-400"
+                                        : interaction.type === "contract"
+                                          ? "bg-purple-500/20 text-purple-400"
+                                          : "bg-stone-gray/20 text-stone-gray"
+                                    }`}
                                 >
                                   {interaction.type === "call"
                                     ? language === "ar"
                                       ? "اتصال"
                                       : "Call"
                                     : interaction.type === "meeting"
-                                    ? language === "ar"
-                                      ? "اجتماع"
-                                      : "Meeting"
-                                    : interaction.type === "booking"
-                                    ? language === "ar"
-                                      ? "حجز"
-                                      : "Booking"
-                                    : interaction.type === "contract"
-                                    ? language === "ar"
-                                      ? "عقد"
-                                      : "Contract"
-                                    : interaction.type === "handover"
-                                    ? language === "ar"
-                                      ? "تسليم"
-                                      : "Handover"
-                                    : interaction.type}
+                                      ? language === "ar"
+                                        ? "اجتماع"
+                                        : "Meeting"
+                                      : interaction.type === "booking"
+                                        ? language === "ar"
+                                          ? "حجز"
+                                          : "Booking"
+                                        : interaction.type === "contract"
+                                          ? language === "ar"
+                                            ? "عقد"
+                                            : "Contract"
+                                          : interaction.type === "handover"
+                                            ? language === "ar"
+                                              ? "تسليم"
+                                              : "Handover"
+                                            : interaction.type}
                                 </span>
                                 <span className="text-stone-gray text-sm">
                                   {interaction.date}

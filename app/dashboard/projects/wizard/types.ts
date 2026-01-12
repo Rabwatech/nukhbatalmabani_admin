@@ -9,24 +9,36 @@ export interface ProjectWizardData {
       ar: string;
       en: string;
     };
-    location: {
-      ar: string;
-      en: string;
-    };
+    locationLink: string; // Google Maps
     city: string;
     district: string;
-    address: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
+    ownerName: string;
+    contractorName: string;
+    contractAttachment?: File; // Admin only
     developer: string;
     licenseNumber: string;
     totalArea: number;
-    landArea: number;
     projectType: 'residential' | 'commercial' | 'mixed';
-    status: 'planning' | 'under_construction' | 'completed' | 'sold_out';
+    status: 'planned' | 'under_construction' | 'completed' | 'sold_out';
+    features: string[]; // Moved from separate section
   };
+
+  // Land Pieces (New Section)
+  landPieces: Array<{
+    id: string;
+    pieceNumber: string;
+    deedNumber: string;
+    type: 'commercial' | 'residential' | 'mixed';
+    area: number;
+    buildingCount: number;
+    attachments: {
+      deed?: File; // Admin/Specific role only
+      constructionLicense?: File;
+      completionCertificate?: File;
+      electricityCertificate?: File;
+      other?: File[];
+    };
+  }>;
 
   // Media
   media: {
@@ -37,123 +49,71 @@ export interface ProjectWizardData {
     brochures: File[];
   };
 
-  // Buildings
+  // Unit Models (New Section)
+  unitModels: Array<{
+    id: string;
+    name: string;
+    type: 'retail' | 'mezzanine' | 'repetitive' | 'annex';
+    unitType?: 'apartment' | 'office' | 'twin';
+    twinRoles?: string;
+    rooms: number;
+    area: number;
+    roofArea?: number;
+    directions: string[];
+    view: 'street' | 'sea' | 'garden' | 'landscape' | 'other';
+    features: string[];
+    basePrice: number;
+    floorPricing: Array<{ floor: string; price: number }>;
+    attachments: {
+      deed?: File;
+      sortingMinutes?: File;
+      blueprint?: File;
+      other?: File[];
+    };
+  }>;
+
+  // Buildings (Modified)
   buildings: {
     buildings: Array<{
       id: string;
-      name: {
-        ar: string;
-        en: string;
-      };
-      floors: number;
-      unitsPerFloor: number;
+      number: string;
+      nameAr: string;
+      landPieceId: string; // Link to LandPiece
       totalUnits: number;
-      buildingType: 'residential' | 'commercial' | 'mixed';
-      features: string[];
+      models: string[]; // IDs of UnitModels
+      floors: number;
     }>;
   };
 
   // Units
   units: {
-    unitTypes: Array<{
+    units: Array<{
       id: string;
-      name: {
-        ar: string;
-        en: string;
-      };
-      size: number;
-      rooms: number;
-      bathrooms: number;
-      balconies: number;
-      floor: number;
-      buildingId: string;
-      price: number;
-      currency: 'SAR' | 'USD' | 'EUR';
       unitNumber: string;
-      direction: 'north' | 'south' | 'east' | 'west';
-      view: 'city' | 'sea' | 'garden' | 'other';
-      features: string[];
+      buildingId: string;
+      modelId: string;
+      floor: string;
       status: 'available' | 'reserved' | 'sold';
+      price: number; // Inherited/Overridden from Model
     }>;
   };
 
-  // Features & Amenities
-  features: {
-    amenities: Array<{
-      id: string;
-      name: {
-        ar: string;
-        en: string;
-      };
-      description: {
-        ar: string;
-        en: string;
-      };
-      category: 'security' | 'recreation' | 'commercial' | 'transportation' | 'other';
-      icon: string;
-      isAvailable: boolean;
-    }>;
-    services: Array<{
-      id: string;
-      name: {
-        ar: string;
-        en: string;
-      };
-      description: {
-        ar: string;
-        en: string;
-      };
-      price: number;
-      currency: 'SAR' | 'USD' | 'EUR';
-      billingCycle: 'monthly' | 'yearly' | 'one_time';
-      isIncluded: boolean;
-    }>;
-  };
-
-  // Pricing
-  pricing: {
-    paymentPlans: Array<{
-      id: string;
-      name: {
-        ar: string;
-        en: string;
-      };
-      description: {
-        ar: string;
-        en: string;
-      };
-      downPayment: number;
-      installments: number;
-      installmentAmount: number;
-      totalAmount: number;
-      currency: 'SAR' | 'USD' | 'EUR';
-      isActive: boolean;
-    }>;
-    pricePerSqm: number;
-    currency: 'SAR' | 'USD' | 'EUR';
-    priceRange: {
-      min: number;
-      max: number;
-    };
-  };
-
-  // Associations
+  // Associations (Jamyat AlMullak)
   associations: {
-    ownersAssociation: {
-      isRequired: boolean;
-      monthlyFee: number;
-      currency: 'SAR' | 'USD' | 'EUR';
-      services: string[];
-      rules: string[];
-    };
-    managementCompany?: {
-      name: string;
-      contactInfo: {
-        phone: string;
-        email: string;
-        address: string;
-      };
-      services: string[];
+    companyName: string;
+    crNumber: string;
+    headquarters: string;
+    ownerName: string;
+    ownerMobile: string;
+    ownerIdNumber: string;
+    proxyNumber?: string;
+    attachments: {
+      cr?: File;
+      nationalAddress?: File;
+      ownerId?: File;
+      proxy?: File;
+      taxNumber?: File;
+      contract?: File;
     };
   };
 
@@ -163,6 +123,8 @@ export interface ProjectWizardData {
     notes: string;
     publishDate?: Date;
     isPublished: boolean;
+    assignedSalesAgent?: string;
+    visibleBuildings?: string[];
   };
 }
 
