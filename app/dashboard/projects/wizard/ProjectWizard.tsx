@@ -170,32 +170,17 @@ export default function ProjectWizard() {
     // Temporarily enable Next button for design testing
     const isCurrentStepValid = true;
 
-    // Handle step navigation
+    // Handle step navigation - Allow direct navigation for design review
     const goToStep = useCallback(
-        async (stepNumber: number) => {
-            if (stepNumber < currentStep) {
-                // Going backwards is always allowed
-                setCurrentStep(stepNumber);
-                return;
-            }
-
-            // Validate current step before proceeding
-            if (!isCurrentStepValid) {
-                toast.error(
-                    language === "ar"
-                        ? "يرجى إكمال جميع الحقول المطلوبة"
-                        : "Please complete all required fields"
-                );
-                return;
-            }
-
-            // Update step completion status
+        (stepNumber: number) => {
+            // Allow navigation to any step for design review
+            // Save current form data before navigating
             const updatedData = methods.getValues();
             updateProjectData(updatedData);
-
+            
             setCurrentStep(stepNumber);
         },
-        [currentStep, methods, updateProjectData, language, isCurrentStepValid]
+        [methods, updateProjectData]
     );
 
     // Handle form submission

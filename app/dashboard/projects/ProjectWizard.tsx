@@ -216,38 +216,17 @@ export default function ProjectWizard() {
   // Temporarily enable Next button to allow clicking and showing validation errors
   const isCurrentStepValid = true;
 
-  // Handle step navigation
+  // Handle step navigation - Allow direct navigation for design review
   const goToStep = useCallback(
-    async (stepNumber: number) => {
-      if (stepNumber < currentStep) {
-        // Going backwards is always allowed
-        setCurrentStep(stepNumber);
-        return;
-      }
-
-      // Validate current step before proceeding
-      const currentData = methods.getValues();
-      try {
-        validateStep(currentStep, currentData);
-      } catch (error) {
-        console.error("Validation failed for step", currentStep, error);
-        toast.error(
-          language === "ar"
-            ? "يرجى إكمال جميع الحقول المطلوبة"
-            : "Please complete all required fields"
-        );
-        // Trigger visual validation errors for the current step
-        await methods.trigger();
-        return;
-      }
-
-      // Update step completion status
+    (stepNumber: number) => {
+      // Allow navigation to any step for design review
+      // Save current form data before navigating
       const updatedData = methods.getValues();
       updateProjectData(updatedData);
 
       setCurrentStep(stepNumber);
     },
-    [currentStep, methods, updateProjectData, language]
+    [methods, updateProjectData]
   );
 
   // Handle form submission
