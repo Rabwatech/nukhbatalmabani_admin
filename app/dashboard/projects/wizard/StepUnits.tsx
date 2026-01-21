@@ -93,7 +93,11 @@ const StepUnits: React.FC<StepProps> = ({
                             <Button
                               type="button"
                               size="sm"
-                              onClick={() => setEditingIndex(null)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditingIndex(null);
+                              }}
                             >
                               {language === "ar" ? "حفظ" : "Save"}
                             </Button>
@@ -102,7 +106,11 @@ const StepUnits: React.FC<StepProps> = ({
                               type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => setEditingIndex(index)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditingIndex(index);
+                              }}
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>
@@ -111,7 +119,11 @@ const StepUnits: React.FC<StepProps> = ({
                             type="button"
                             size="sm"
                             variant="destructive"
-                            onClick={() => removeUnit(index)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              removeUnit(index);
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

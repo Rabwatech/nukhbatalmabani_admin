@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDirection } from "@/context/DirectionContext";
 import { ChevronLeft, ChevronRight, Save, Eye, EyeOff } from "lucide-react";
@@ -262,22 +262,21 @@ export default function ProjectWizard() {
     }
   };
 
-  // Get current step component
-  const CurrentStepComponent = () => {
-    const StepComponent =
-      STEPS.find((step) => step.id === currentStep)?.component || StepBasicInfo;
-    return (
-      <StepComponent
-        data={projectData}
-        onUpdate={updateProjectData}
-        onNext={() => goToStep(currentStep + 1)}
-        onPrevious={() => goToStep(currentStep - 1)}
-        isFirstStep={currentStep === 1}
-        isLastStep={currentStep === STEPS.length}
-        isSubmitting={isSubmitting}
-      />
-    );
-  };
+  // Get current step component - use useMemo to prevent remounting on every render
+  const StepComponent = useMemo(() => {
+    return STEPS.find((step) => step.id === currentStep)?.component || StepBasicInfo;
+  }, [currentStep]);
+
+  // Memoize step props to prevent unnecessary re-renders
+  const stepProps = useMemo(() => ({
+    data: projectData,
+    onUpdate: updateProjectData,
+    onNext: () => goToStep(currentStep + 1),
+    onPrevious: () => goToStep(currentStep - 1),
+    isFirstStep: currentStep === 1,
+    isLastStep: currentStep === STEPS.length,
+    isSubmitting: isSubmitting,
+  }), [projectData, updateProjectData, goToStep, currentStep, isSubmitting]);
 
   // Calculate progress percentage
   const progressPercentage = (currentStep / STEPS.length) * 100;
@@ -489,7 +488,7 @@ export default function ProjectWizard() {
                   exit={{ opacity: 0, y: -20, scale: 0.98 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
-                  <CurrentStepComponent />
+                  <StepComponent {...stepProps} />
                 </motion.div>
               </AnimatePresence>
             </FormProvider>
